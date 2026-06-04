@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#000010" rx="80"/>
+  <rect x="40" y="40" width="432" height="432" rx="60" fill="#050520"/>
+  <text x="256" y="220" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" fill="#00aaff" text-anchor="middle" letter-spacing="-4">IIDX</text>
+  <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="100" font-weight="900" fill="#ff6600" text-anchor="middle">☆12</text>
+</svg>

@@ -1,0 +1,18 @@
+{
+  "name": "IIDX ☆12 ランプ管理",
+  "short_name": "IIDX☆12",
+  "description": "beatmania IIDX ☆12難易度表ランプ管理",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000010",
+  "theme_color": "#000010",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
