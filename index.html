@@ -805,6 +805,22 @@
       <div class="memo-label">メモ（任意）</div>
       <textarea id="memoInput" placeholder="気になる点、苦手箇所など..."></textarea>
     </div>
+    <div style="padding: 0 16px 16px; display:flex; gap:8px;">
+      <a id="wikiLink" href="#" target="_blank" rel="noopener"
+        style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:11px;border-radius:10px;background:#0a1a2a;border:1px solid #1a4a6a;
+               color:#00aaff;font-size:13px;font-weight:700;text-decoration:none;
+               font-family:'Noto Sans JP',sans-serif;">
+        🔗 攻略Wiki（TexTage）
+      </a>
+      <a id="wikiLink2" href="#" target="_blank" rel="noopener"
+        style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:11px;border-radius:10px;background:#1a0a2a;border:1px solid #4a1a6a;
+               color:#cc88ff;font-size:13px;font-weight:700;text-decoration:none;
+               font-family:'Noto Sans JP',sans-serif;">
+        🔍 難易度表検索
+      </a>
+    </div>
   </div>
 </div>
 
@@ -1511,7 +1527,7 @@ const LAMP_ORDER = { none: 0, failed: 1, ae: 2, easy: 3, clear: 4, hard: 5, exh:
 // ────────────────────────────────────────────────
 // TIERS
 // ────────────────────────────────────────────────
-const TIER_ORDER = ['未定','S+','S','A+','A','B+','B','C','D','E','F'];
+const TIER_ORDER = ['F','E','D','C','B','B+','A','A+','S','S+','未定'];
 
 // ────────────────────────────────────────────────
 // STATE
@@ -1707,6 +1723,11 @@ function openModal(songId) {
   document.getElementById('modalSub').textContent = `ver.${s.ver} ／ BPM ${s.bpm} ／ ${s.notes}NOTES ／ ${s.attr}`;
   document.getElementById('memoInput').value = memos[songId] || '';
 
+  // Wiki links
+  const encodedName = encodeURIComponent(s.name);
+  document.getElementById('wikiLink').href = `https://textage.cc/score/index.html?AA100${encodedName}`;
+  document.getElementById('wikiLink2').href = `https://w.atwiki.jp/bemani2sp11/search?keyword=${encodedName}`;
+
   const opts = document.getElementById('lampOptions');
   opts.innerHTML = LAMPS.map(l => {
     const sel = lamp === l.id ? 'selected' : '';
@@ -1818,16 +1839,15 @@ document.querySelectorAll('.sub-back').forEach(btn => {
 // ────────────────────────────────────────────────
 function renderGraph() {
   const body = document.getElementById('body-graph');
-  const EASY_PLUS = ['easy','clear','hard','exh','fc'];
-  const CLEAR_PLUS = ['clear','hard','exh','fc'];
+  const LAMP_STACK = ['easy','clear','hard','exh','fc']; // order in bar left to right
 
   let html = `<div class="lamp-legend">`;
-  LAMPS.filter(l => l.id !== 'none').forEach(l => {
+  LAMPS.filter(l => LAMP_STACK.includes(l.id)).forEach(l => {
     html += `<div class="lamp-legend-item"><div class="lamp-legend-dot" style="background:${l.color}"></div>${l.label}</div>`;
   });
   html += `</div>`;
 
-  // Per-tier stacked bar
+  // Per-tier stacked bar (each lamp gets its own color segment)
   html += `<div class="chart-section">`;
   html += `<div class="chart-label">EASY以上クリア率（ティア別）</div>`;
 
@@ -1836,18 +1856,21 @@ function renderGraph() {
     const songs = SONGS.filter(s => s.tier === tier);
     if (songs.length === 0) return;
     const total = songs.length;
-    const easyPlus = songs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
-    const clearPlus = songs.filter(s => CLEAR_PLUS.includes(getLamp(s.id))).length;
+    const easyPlus = songs.filter(s => LAMP_STACK.includes(getLamp(s.id))).length;
     const pct = Math.round(easyPlus / total * 100);
-    const clearPct = Math.round(clearPlus / total * 100);
+
+    // Build stacked segments per lamp
+    const segments = LAMP_STACK.map(lampId => {
+      const lc = lampConfig(lampId);
+      const cnt = songs.filter(s => getLamp(s.id) === lampId).length;
+      const w = Math.round(cnt / total * 100);
+      return w > 0 ? `<div style="width:${w}%;background:${lc.color};height:100%;flex-shrink:0"></div>` : '';
+    }).join('');
 
     html += `<div class="chart-row">
       <div class="chart-tier-name">${tier}</div>
       <div class="chart-bar-wrap">
-        <div style="position:absolute;inset:0;display:flex;">
-          <div style="width:${clearPct}%;background:#1a66cc;height:100%;transition:width 0.5s"></div>
-          <div style="width:${Math.max(0,pct-clearPct)}%;background:#22aa44;height:100%;transition:width 0.5s"></div>
-        </div>
+        <div style="position:absolute;inset:0;display:flex;">${segments}</div>
       </div>
       <div class="chart-pct">${pct}%</div>
       <div class="chart-count">${easyPlus}/${total}</div>
@@ -1855,7 +1878,7 @@ function renderGraph() {
   });
   html += `</div>`;
 
-  // Lamp distribution donut-like summary
+  // Lamp distribution
   html += `<div class="chart-section">`;
   html += `<div class="chart-label">ランプ別 内訳</div>`;
   const total = SONGS.length;
