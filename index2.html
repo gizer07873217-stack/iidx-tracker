@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IIDX☆12">
+<meta name="theme-color" content="#000010">
+<title>IIDX ☆12 ランプ管理</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+  :root {
+    --bg: #000010;
+    --bg2: #00001a;
+    --panel: #050520;
+    --border: #1a1a4a;
+    --accent: #00aaff;
+    --accent2: #ff6600;
+    --text: #ccd6f6;
+    --text-dim: #5a6890;
+
+    /* Lamp colors */
+    --lamp-none:   #1a1a2e;
+    --lamp-ae:     #9933cc;
+    --lamp-failed: #cc2222;
+    --lamp-easy:   #22aa44;
+    --lamp-clear:  #1a66cc;
+    --lamp-hard:   #cccccc;
+    --lamp-exh:    #ccaa00;
+    --lamp-fc:     #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0,0,16,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0) 0 0;
+  }
+
+  .header-inner {
+    padding: 10px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-shadow: 0 0 20px rgba(0,170,255,0.5);
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  #searchInput {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #searchInput:focus { border-color: var(--accent); }
+  #searchInput::placeholder { color: var(--text-dim); }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    display: flex;
+    padding: 6px 16px 10px;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .stats-bar::-webkit-scrollbar { display: none; }
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .stat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ─── FILTER TABS ─── */
+  .filter-bar {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+
+  .filter-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 12px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .filter-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .filter-btn:hover { color: var(--text); }
+
+  /* ─── LAMP FILTER ─── */
+  .lamp-filter {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .lamp-filter::-webkit-scrollbar { display: none; }
+
+  .lf-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    opacity: 0.5;
+  }
+  .lf-btn.active { opacity: 1; border-color: rgba(255,255,255,0.3); }
+
+  /* ─── SORT BAR ─── */
+  .sort-bar {
+    display: flex;
+    gap: 6px;
+    padding: 6px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .sort-bar::-webkit-scrollbar { display: none; }
+
+  .sort-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+  .sort-btn {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sort-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  /* ─── SONG LIST ─── */
+  #songList {
+    padding: 8px 12px 100px;
+  }
+
+  .group-header {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    padding: 14px 4px 6px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-header::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .song-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 8px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    cursor: pointer;
+    transition: background 0.12s;
+    position: relative;
+    border: 1px solid transparent;
+  }
+  .song-card:hover, .song-card:active {
+    background: var(--panel);
+    border-color: var(--border);
+  }
+
+  .lamp-strip {
+    width: 4px;
+    height: 38px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .song-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .song-name {
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+
+  .song-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 2px;
+  }
+
+  .meta-attr {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--panel);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .meta-bpm {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    white-space: nowrap;
+  }
+
+  .meta-notes {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    white-space: nowrap;
+  }
+
+  .lamp-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 5px;
+    color: #000;
+    white-space: nowrap;
+    text-align: center;
+    min-width: 36px;
+  }
+
+  /* ─── LAMP MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,10,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: flex-end;
+  }
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-sheet {
+    width: 100%;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 0 0 env(safe-area-inset-bottom, 20px);
+    animation: slideUp 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 3px;
+    margin: 10px auto 0;
+  }
+
+  .modal-song-name {
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 20px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .modal-song-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 0 20px 14px;
+  }
+
+  .lamp-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 4px 16px 20px;
+  }
+
+  .lamp-opt {
+    padding: 14px 12px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lamp-opt.selected {
+    border-color: rgba(255,255,255,0.5);
+    transform: scale(1.02);
+  }
+
+  .lamp-opt-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* lamp colors */
+  .lamp-none-bg   { background: #1a1a2e; color: #666; }
+  .lamp-ae-bg     { background: #2a0044; color: #dd88ff; }
+  .lamp-failed-bg { background: #2a0000; color: #ff4444; }
+  .lamp-easy-bg   { background: #0a2a14; color: #44dd77; }
+  .lamp-clear-bg { background: #0a1a44; color: #4488ff; }
+  .lamp-hard-bg  { background: #252525; color: #dddddd; }
+  .lamp-exh-bg   { background: #2a2200; color: #ffcc33; }
+  .lamp-fc-bg    { background: #1a1a1a; color: #ffffff; }
+
+  .lamp-none-color   { background: var(--lamp-none); }
+  .lamp-ae-color     { background: var(--lamp-ae); }
+  .lamp-failed-color { background: var(--lamp-failed); }
+  .lamp-easy-color   { background: var(--lamp-easy); }
+  .lamp-clear-color { background: var(--lamp-clear); }
+  .lamp-hard-color  { background: var(--lamp-hard); }
+  .lamp-exh-color   { background: var(--lamp-exh); }
+  .lamp-fc-color    { background: var(--lamp-fc); }
+
+  /* fc text special */
+  .lamp-fc-badge { background: linear-gradient(135deg,#fff 0%,#ffd700 30%,#00cfff 70%,#fff 100%); color: #000; }
+
+  .empty-msg {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* memo section in modal */
+  .modal-memo {
+    padding: 0 16px 8px;
+  }
+  .modal-memo textarea {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    resize: none;
+    height: 60px;
+    outline: none;
+  }
+  .modal-memo textarea:focus { border-color: var(--accent); }
+  .memo-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+
+  .memo-bubble {
+    font-size: 10px;
+    color: var(--accent2);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+
+  /* ─── OTHER BUTTON ─── */
+  .other-btn {
+    flex-shrink: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .other-btn:active { color: var(--accent); border-color: var(--accent); }
+
+  /* ─── OTHER PANEL (full screen overlay) ─── */
+  .other-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: var(--bg);
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .other-overlay.open { display: flex; }
+
+  .other-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: env(safe-area-inset-top, 0) 16px 0;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+  .other-back {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    padding: 4px 8px 4px 0;
+  }
+  .other-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .other-menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px 16px;
+    overflow-y: auto;
+  }
+
+  .menu-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .menu-card:active { border-color: var(--accent); transform: scale(0.97); }
+  .menu-card-icon { font-size: 26px; }
+  .menu-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .menu-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+  /* ─── SUB PAGE ─── */
+  .sub-page {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .sub-page.open { display: flex; }
+
+  .sub-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: env(safe-area-inset-top, 0) 16px 0;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sub-back {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    padding: 4px 8px 4px 0;
+  }
+  .sub-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .sub-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  }
+
+  /* ─── CHART (SVG bar) ─── */
+  .chart-section { margin-bottom: 24px; }
+  .chart-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+  }
+  .chart-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .chart-tier-name {
+    width: 28px;
+    font-size: 11px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .chart-bar-wrap {
+    flex: 1;
+    height: 16px;
+    background: var(--panel);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .chart-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .chart-pct {
+    width: 34px;
+    font-size: 11px;
+    font-family: 'Rajdhani', sans-serif;
+    color: var(--text-dim);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .chart-count {
+    width: 40px;
+    font-size: 10px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .lamp-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .lamp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .lamp-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ─── RECOMMEND ─── */
+  .rec-section { margin-bottom: 20px; }
+  .rec-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rec-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .rec-card:active { border-color: var(--accent); }
+  .rec-card-info { flex: 1; min-width: 0; }
+  .rec-card-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-card-sub  { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .rec-card-reason {
+    font-size: 10px;
+    color: var(--accent2);
+    background: rgba(255,102,0,0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ─── LOG ─── */
+  .log-day-header {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 1px;
+    padding: 10px 0 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .log-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(26,26,74,0.5);
+    font-size: 12px;
+  }
+  .log-arrow { color: var(--text-dim); font-size: 10px; }
+  .log-name  { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-empty { color: var(--text-dim); text-align: center; padding: 40px 0; font-size: 13px; }
+
+  /* ─── SKILL TAGS ─── */
+  .skill-tag-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .skill-tag-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .skill-tag-name {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .skill-tag-bar-wrap {
+    height: 8px;
+    background: #0a0a20;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .skill-tag-bar { height: 100%; border-radius: 4px; }
+  .skill-tag-sub { font-size: 10px; color: var(--text-dim); }
+
+  /* ─── SUMMARY ─── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .summary-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .summary-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .summary-label { font-size: 11px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">IIDX <span>☆12</span></div>
+    <div class="search-wrap">
+      <input type="search" id="searchInput" placeholder="曲名・属性で検索..." autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <button class="other-btn" id="otherBtn">その他 ▸</button>
+  </div>
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="lamp-filter" id="lampFilter"></div>
+  <div class="sort-bar">
+    <span class="sort-label">並び替え:</span>
+    <button class="sort-btn active" data-sort="default">デフォルト</button>
+    <button class="sort-btn" data-sort="name">曲名</button>
+    <button class="sort-btn" data-sort="lamp">ランプ</button>
+  </div>
+</header>
+
+<div id="songList"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-song-name" id="modalName"></div>
+    <div class="modal-song-sub" id="modalSub"></div>
+    <div class="lamp-options" id="lampOptions"></div>
+    <div class="modal-memo">
+      <div class="memo-label">メモ（任意）</div>
+      <textarea id="memoInput" placeholder="気になる点、苦手箇所など..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ITS OTHER OVERLAY ═══ -->
+<div class="other-overlay" id="otherOverlay">
+
+  <!-- Menu screen -->
+  <div id="otherMenu" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="other-header">
+      <button class="other-back" id="otherClose">✕ 閉じる</button>
+      <div class="other-title">その他の機能</div>
+    </div>
+    <div class="other-menu">
+      <div class="menu-card" data-page="graph">
+        <div class="menu-card-icon">📊</div>
+        <div class="menu-card-name">進捗グラフ</div>
+        <div class="menu-card-desc">ティア別のクリア率を棒グラフで確認</div>
+      </div>
+      <div class="menu-card" data-page="recommend">
+        <div class="menu-card-icon">🎯</div>
+        <div class="menu-card-name">おすすめ曲</div>
+        <div class="menu-card-desc">今の状況から次に狙うべき曲を提案</div>
+      </div>
+      <div class="menu-card" data-page="log">
+        <div class="menu-card-icon">📋</div>
+        <div class="menu-card-name">プレイログ</div>
+        <div class="menu-card-desc">ランプが変わった履歴を日付順に表示</div>
+      </div>
+      <div class="menu-card" data-page="skill">
+        <div class="menu-card-icon">💪</div>
+        <div class="menu-card-name">苦手分析</div>
+        <div class="menu-card-desc">属性タグ別のクリア率で得意・苦手を把握</div>
+      </div>
+      <div class="menu-card" data-page="summary" style="grid-column:span 2">
+        <div class="menu-card-icon">🏆</div>
+        <div class="menu-card-name">サマリー</div>
+        <div class="menu-card-desc">全体の達成状況をまとめて確認</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 グラフ -->
+  <div class="sub-page" id="page-graph">
+    <div class="sub-header">
+      <button class="sub-back" data-back="graph">← 戻る</button>
+      <div class="sub-title">📊 進捗グラフ</div>
+    </div>
+    <div class="sub-body" id="body-graph"></div>
+  </div>
+
+  <!-- 🎯 おすすめ -->
+  <div class="sub-page" id="page-recommend">
+    <div class="sub-header">
+      <button class="sub-back" data-back="recommend">← 戻る</button>
+      <div class="sub-title">🎯 おすすめ曲</div>
+    </div>
+    <div class="sub-body" id="body-recommend"></div>
+  </div>
+
+  <!-- 📋 ログ -->
+  <div class="sub-page" id="page-log">
+    <div class="sub-header">
+      <button class="sub-back" data-back="log">← 戻る</button>
+      <div class="sub-title">📋 プレイログ</div>
+    </div>
+    <div class="sub-body" id="body-log"></div>
+  </div>
+
+  <!-- 💪 苦手分析 -->
+  <div class="sub-page" id="page-skill">
+    <div class="sub-header">
+      <button class="sub-back" data-back="skill">← 戻る</button>
+      <div class="sub-title">💪 苦手分析</div>
+    </div>
+    <div class="sub-body" id="body-skill"></div>
+  </div>
+
+  <!-- 🏆 サマリー -->
+  <div class="sub-page" id="page-summary">
+    <div class="sub-header">
+      <button class="sub-back" data-back="summary">← 戻る</button>
+      <div class="sub-title">🏆 サマリー</div>
+    </div>
+    <div class="sub-body" id="body-summary"></div>
+  </div>
+
+</div>
+
+<script>
+// ────────────────────────────────────────────────
+// SONG DATA
+// ────────────────────────────────────────────────
+const RAW_SONGS = [
+// format: [ver, name, bpm, notes, attr, tier, tierType]
+// tierType: "地力" or "個人差"
+[30,"CUE CUE RESCUE(L)",160,1549,"同時押し","未定",""],
+[21,"HYENA(L)",178,1894,"CN、MSS、BSS、連皿、トリル","未定",""],
+[32,"Mid-Corner (Magic Maker)",165,1611,"CN、BSS、連皿","未定",""],
+[25,"Nothing but Theory(L)",160,1890,"同時押し、二重階段、BSS","未定",""],
+[19,"蛇神(L)",170,1904,"HCN、二重トリル、階段","未定",""],
+[28,"新宝島(L)",165,1790,"CN、乱打","未定",""],
+[32,"天使のカンタータ -Cantata of Angels-",158,2205,"CN、坂譜面、物量","未定",""],
+[31,"フォニイ(L)",170,1975,"同時押し","未定",""],
+[29,"烽火連天の刃(L)",190,2279,"CN、BSS、軸、連打、物量","未定",""],
+[30,"Beyond Evolution",185,2216,"HCN、連皿トリル、縦連","S+","地力"],
+[25,"DEATH†ZIGOQ ～怒りの高速爆走野郎～(L)",200,2459,"HCN、皿複合、トリル、物量","S+","地力"],
+[24,"GuNGNiR(L)",222,2443,"物量、連皿","S+","地力"],
+[20,"Illegal Function Call(L)",260,2023,"高密度、縦連","S+","地力"],
+[14,"KAMAITACHI(L)",165,2000,"連皿、トリル","S+","地力"],
+[24,"Mare Nectaris",256,2094,"高密度、縦連、坂譜面、ラス殺し","S+","地力"],
+[29,"n/a","85-255(170)",1867,"BSS、MSS、ソフラン","S+","地力"],
+[21,"Sigmund(L)",200,2267,"CN、二重階段、連皿、ラス殺し","S+","地力"],
+[30,"Somnidiscotheque",115,1776,"CN、高密度","S+","地力"],
+[19,"The Limbo(L)",200,2190,"物量、デニム","S+","地力"],
+[21,"Verflucht(L)",180,2401,"CN、BSS、超高密度乱打、二重階段、皿","S+","地力"],
+[21,"疾風迅雷(L)",180,1824,"CN、皿、終盤発狂","S+","地力"],
+[16,"卑弥呼","82-185(185)",2119,"階段、二重階段、軸押し、連続縦連、トリル、ソフラン","S+","地力"],
+[31,"惑星鉄道","10-166(157)",1633,"ソフラン、CN、BSS、疑似停止","S+","地力"],
+[19,"DIAVOLO",160,1745,"高速トリル、坂譜面、ラス殺し","S+","個人差"],
+[20,"Plan 8",212,1690,"高速連皿、ラス殺し","S+","個人差"],
+[29,"RAGE feat.H14 of LEONAIR",166,1886,"MSS、連皿","S+","個人差"],
+[24,"SAMURAI-Scramble(L)",150,1576,"連皿","S+","個人差"],
+[23,"灼熱 Pt.2 Long Train Running",165,1804,"連皿","S+","個人差"],
+[18,"灼熱Beach Side Bunny",153,1719,"連皿、トリル","S+","個人差"],
+[29,"Binary Black Hole",190,2000,"CN","S","地力"],
+[26,"Carmina",195,2000,"階段、縦連打、CN、発狂、ラス殺し","S","地力"],
+[22,"Chrono Diver -PENDULUMs-",196,2222,"物量、デニム、トリル、二重階段","S","地力"],
+[20,"Confiserie",185,1833,"二重階段、終盤発狂、ラス殺し","S","地力"],
+[18,"Dances with Snow Fairies(L)",154,2135,"CN、物量、微縦連","S","地力"],
+[20,"Elemental Creation",212,2130,"同時押し、二重乱打、軸、高速皿、縦連","S","地力"],
+[25,"EMERALDAS","88-176(176)",1833,"HCN、HBSS、トリル、ソフラン、連皿、終盤難","S","地力"],
+[27,"Everlasting Message",230,1970,"CN","S","地力"],
+[24,"Go Ahead!!",200,1413,"中盤発狂、終盤易化","S","地力"],
+[26,"GO OVER WITH GLARE -ROOTAGE 26-",170,2000,"皿絡み、発狂、ラス殺し","S","地力"],
+[29,"hard-wired",208,1901,"HCN、終盤難","S","地力"],
+[15,"ICARUS(L)","126-251(176)",2000,"ソフラン、中盤難、乱打、トリル","S","地力"],
+[21,"KAISER PHOENIX(L)",170,2026,"高密度、二重階段、縦連打","S","地力"],
+[27,"Lost Souls(L)",185,2000,"物量、トリル","S","地力"],
+[28,"MEGAERA",206,1790,"CN","S","地力"],
+[27,"Override(L)",175,2204,"物量、皿複合","S","地力"],
+[18,"perditus†paradisus",172,2065,"CN、階段、ラス殺し","S","地力"],
+[19,"Phoenix(L)",176,2027,"BSS、高密度","S","地力"],
+[21,"Sigmund",200,2029,"CN、階段、連皿、ラス殺し","S","地力"],
+[28,"Sinus Iridum","128-256(128)",1803,"CN、ソフラン","S","地力"],
+[14,"TRANOID(L)","130-190(130)",1546,"CN、ソフラン","S","地力"],
+[30,"Xerulean",182,1802,"HBSS、連皿、デニム、ラス殺し","S","地力"],
+[30,"栄冠のカンパネラ",185,2000,"CN、高密度","S","地力"],
+[23,"駅猫のワルツ",282,1558,"高速階段、ラス殺し","S","地力"],
+[24,"焔極OVERKILL",192,1901,"連皿","S","地力"],
+[20,"お米の美味しい炊き方、そしてお米を食べることによるその効果。(L)",190,1907,"トリル","S","地力"],
+[26,"X-DEN",200,2220,"中盤発狂、トリル、デニム、連皿、HARD地雷","S","地力"],
+[22,"共鳴遊戯の華",190,2000,"CN","S","地力"],
+[22,"千年ノ理(L)",153,2183,"CN","S","地力"],
+[21,"IX",198,2007,"階段、二重階段、CN、BSS、連皿、ラス殺し","S","地力"],
+[13,"嘆きの樹",160,2000,"繰り返し乱打、同時押し、デニム発狂、螺旋階段発狂、後半難","S","地力"],
+[22,"表裏一体！？怪盗いいんちょの悩み(L)",165,2334,"連皿複合、物量","S","地力"],
+[24,"BroGamer(L)",207,2383,"皿複合、同時押し、物量","S","個人差"],
+[27,"EROICA",200,2040,"HCN、極短CN","S","個人差"],
+[31,"Level 5",185,1937,"連皿、CN、BSS、トリル","S","個人差"],
+[27,"Lords Of The Roundtable",174,1586,"HCN、BSS、連皿","S","個人差"],
+[15,"Time to Air(L)",191,1888,"同時押し、連皿、ラス殺し","S","個人差"],
+[20,"Timepiece phase II (CN Ver.)",287,1546,"CN、縦連","S","個人差"],
+[29,"WHA",108,1946,"HBSS、HCN、連皿","S","個人差"],
+[28,"ディスコルディア","180-280(280)",2073,"CN、縦連打","S","個人差"],
+[17,"Almagest",178,1629,"CN、BSS、階段","A+","地力"],
+[31,"Ambivalent Vermilia",185,2132,"軸、皿複合","A+","地力"],
+[21,"Ancient Scapes(L)",178,2198,"二重トリル、階段、ラス殺し","A+","地力"],
+[15,"Anisakis -somatic mutation type\"Forza\"-(L)",185,1971,"物量、トリル、同時","A+","地力"],
+[16,"B4U(BEMANI FOR YOU MIX)(L)",170,2360,"物量、同時、皿複合","A+","地力"],
+[30,"Bad Encryption",200,1633,"CN、BSS、皿複合、連皿、軸押し","A+","地力"],
+[23,"Blue Spring Express",172,1728,"局所難、ラス殺し","A+","地力"],
+[31,"CADENZA",160,2357,"物量、連皿","A+","地力"],
+[22,"CHRONO DIVER -NORNIR-(L)",185,2233,"物量","A+","地力"],
+[26,"CODE:0(L)",125,1829,"連皿、連打","A+","地力"],
+[13,"CONTRACT(L)",180,1418,"階段、ラス殺し","A+","地力"],
+[27,"Dans la nuit de l'eternite",244,1830,"高速二重階段","A+","地力"],
+[22,"EBONY & IVORY(L)","113-170(170)",1887,"ソフラン、トリル","A+","地力"],
+[31,"Glitch N Ride","30-300(150)",1389,"CN、BSS、ソフラン","A+","地力"],
+[28,"Ignis†Irae","188-191(191)",1970,"CN","A+","地力"],
+[25,"Initiation",160,2018,"HCN、HBSS、乱打、縦連","A+","地力"],
+[27,"LIGHTNING STRIKES(L)",174,2123,"CN、BSS、物量","A+","地力"],
+[30,"LOUDER ROLLING THUNDER",180,1767,"HCN、HBSS","A+","地力"],
+[23,"NZM",190,1783,"HCN、階段","A+","地力"],
+[18,"PARADISE LOST",200,1718,"CN、乱打、皿、ラス殺し","A+","地力"],
+[24,"Quakes",190,1654,"HCN、ラス殺し","A+","地力"],
+[25,"REVOLVER(L)",160,1731,"CN","A+","地力"],
+[32,"Satellite Burst",177,2000,"CN、階段、二重トリル、デニム","A+","地力"],
+[20,"Saturn(L)",155,1783,"縦連、ラス殺し","A+","地力"],
+[27,"Smashing Wedge",215,1957,"BSS、ゴミ付二重トリル、後半難","A+","地力"],
+[31,"SOLAR ECLIPSE",195,1893,"HCN、連皿","A+","地力"],
+[29,"SOLID WYVERN(L)",165,1999,"終盤難、皿絡み、BSS","A+","地力"],
+[30,"The Clown of 24stairs",204,1788,"二重階段","A+","地力"],
+[27,"THE F∀UST",170,1851,"ラス殺し","A+","地力"],
+[28,"Tiempo Loco",180,1884,"CN、BSS","A+","地力"],
+[14,"VANESSA(L)",185,1771,"二重階段、皿","A+","地力"],
+[30,"VØID","80-170(164)",1712,"CN、BSS、MSS、ソフラン","A+","地力"],
+[26,"voltississimo",225,1888,"高速、二重配置、同時押し","A+","地力"],
+[31,"Vulnerability",167,1885,"HCN、HBSS、連皿、終盤難","A+","地力"],
+[30,"［ ］DENTITY",200,2000,"BSS、局所難","A+","地力"],
+[27,"がっつり陰キャ!? 怪盗いいんちょの億劫^^;",185,2192,"皿絡み、物量","A+","地力"],
+[19,"恋する☆宇宙戦争っ！！(L)",200,2355,"CN、物量","A+","地力"],
+[25,"シムルグの目醒め",190,1822,"皿複合、高速トリル","A+","地力"],
+[28,"∀",180,1802,"ラス殺し","A+","地力"],
+[22,"超青少年ノ為ノ超多幸ナ超古典的超舞曲(L)",150,2110,"高密度乱打、高速トリル","A+","地力"],
+[28,"-65℃",186,1912,"CN","A+","地力"],
+[21,"煉獄のエルフェリア",183,2000,"中盤発狂","A+","地力"],
+[19,"BLACK.by X-Cross Fade",163,1738,"高速皿、同時押し、ラス殺し","A+","個人差"],
+[24,"ECHIDNA",146,1775,"HCN","A+","個人差"],
+[21,"invoker(L)",195,1851,"乱打、軸、連皿、皿複合","A+","個人差"],
+[28,"Level 3",175,1844,"BSS、連皿","A+","個人差"],
+[30,"Level 4",180,1883,"連皿、皿複合、BSS、CN","A+","個人差"],
+[26,"Red. by Jack Trance",160,1862,"連皿、BSS、皿複合","A+","個人差"],
+[22,"Reflux",150,1574,"CN、BSS","A+","個人差"],
+[27,"SCREW // owo // SCREW",114,1567,"高速連皿","A+","個人差"],
+[25,"The Chase",142,1148,"連皿、24分連皿、連皿+トリル、BSS","A+","個人差"],
+[28,"THE PEERLESS UNDER HEAVEN",170,1818,"連皿","A+","個人差"],
+[20,"Thor's Hammer",150,1641,"皿複合、縦連、二重階段、坂譜面","A+","個人差"],
+[19,"TITANS RETURN(L)","97-194(194)",1377,"HCN、ソフラン","A+","個人差"],
+[29,"TOMAHAWK",215,1830,"連皿","A+","個人差"],
+[20,"Zirkfied",210,1968,"乱打、デニム、縦連、ラス殺し、所見殺し","A+","個人差"],
+[23,"真 地獄超特急 -HELL or HELL-",165,1727,"HCN、連皿、皿複合","A+","個人差"],
+[29,"ピアノ独奏無言歌 \"灰燼\"","100-200(150)",1977,"ソフラン","A+","個人差"],
+[29,"ABSOLUTE EVIL",200,1778,"HCN","A","地力"],
+[29,"ALTERNATOR",185,1907,"BSS、MSS","A","地力"],
+[27,"Artist",165,1870,"CN、縦連打","A","地力"],
+[17,"Bad Maniacs",195,1656,"軸押し、乱打","A","地力"],
+[27,"BEAT PRISONER",155,1844,"3～5本同時CN、連皿","A","地力"],
+[28,"BLACK or WHITE?",185,2013,"CN","A","地力"],
+[15,"Blue Rain(L)",144,1702,"高密度、終盤難、乱打","A","地力"],
+[21,"Close the World feat.a☆ru(L)",188,1983,"高密度、二重階段","A","地力"],
+[28,"COSMIC RAY",195,1509,"CN","A","地力"],
+[25,"DEATH†ZIGOQ ～怒りの高速爆走野郎～",200,2075,"皿複合、乱打、CN、トリル","A","地力"],
+[31,"Demon March",174,1875,"HCN、HBSS","A","地力"],
+[22,"Despair of ELFERIA",205,2096,"同時押し、二重階段、ラス殺し","A","地力"],
+[23,"Devil's Gear",180,1793,"終盤発狂","A","地力"],
+[24,"DORNWALD ～Junge～",169,1903,"縦連","A","地力"],
+[23,"Dynamite",100,1953,"CN・BSS、皿複合","A","地力"],
+[21,"Elektrick U-Phoria(L)",180,2050,"HCN、物量","A","地力"],
+[17,"EXUSIA",188,1964,"乱打、軸、ラス殺し","A","地力"],
+[21,"Feel The Beat(L)",175,2225,"前半難、乱打、皿複合","A","地力"],
+[15,"four pieces of heaven(L)","125-195(195)",1518,"高密度、ソフラン、低速","A","地力"],
+[17,"G59",170,2000,"デニム、軸押し、高速小階段","A","地力"],
+[13,"Ganymede(L)","72-82(82)",1356,"ズレ、階段、終盤難","A","地力"],
+[24,"GuNGNiR",222,2081,"高速階段、皿複合","A","地力"],
+[24,"HADES",155,1601,"同時押し、皿複合、ラス殺し","A","地力"],
+[19,"HAERETICUS",208,1589,"乱打、皿複合、全体難","A","地力"],
+[21,"KAISER PHOENIX",170,1693,"軸、二重階段、トリル、縦連","A","地力"],
+[25,"Life Is A Game ft.DD\"ナカタ\"Metal",195,1775,"ラス殺し","A","地力"],
+[28,"LOCUS OF THE TRAVEL",182,1920,"CN、連皿","A","地力"],
+[15,"MENDES",168,1831,"前半難、高密度発狂、皿複合","A","地力"],
+[32,"NOIXIA",165,2027,"CN、MSS、二重階段、二重カプセル配置、X譜面","A","地力"],
+[26,"Painful Fate",192,1702,"CN、乱打","A","地力"],
+[17,"quell～the seventh slave～",162,1646,"局所発狂、皿複合","A","地力"],
+[16,"Secrets(L)",150,2116,"皿複合、ラス殺し","A","地力"],
+[17,"SOLID STATE SQUAD(L)",155,1868,"HCN","A","地力"],
+[30,"suspicions",153,1908,"ラス殺し","A","地力"],
+[27,"THE BRAVE MUST DIE",215,2075,"CN、物量","A","地力"],
+[26,"The Rebellion of Sequencer",300,1634,"軸、局所発狂","A","地力"],
+[23,"Triple Counter",216,2016,"CN","A","地力"],
+[27,"TRIUMPH",183,1724,"CN、BSS","A","地力"],
+[21,"Verflucht",180,1805,"二重階段、二重トリル","A","地力"],
+[23,"Violet Pulse(L)",134,2115,"高密度、微縦連","A","地力"],
+[30,"VOLAQUAS",212,1982,"CN、BSS","A","地力"],
+[13,"waxing and wanding(L)",191,2000,"物量、軸","A","地力"],
+[23,"ZEPHYRANTHES(L)",180,1982,"CN、皿絡み","A","地力"],
+[25,"255",255,1676,"トリル、軸、皿絡み、ガチ押し","A","地力"],
+[23,"紫陽花 -AZISAI-(L)",155,1815,"CN、BSS、MSS、二重階段、中盤難","A","地力"],
+[26,"お菓子の王国",190,2109,"物量、ズレ、中盤発狂、終盤発狂","A","地力"],
+[27,"俺ら東京さ行ぐだ(L)","110-150(150)",1874,"CN、BSS、連皿、ソフラン","A","地力"],
+[20,"仮想空間の旅人たち(L)",151,1943,"終盤難","A","地力"],
+[27,"華麗なる大犬円舞曲","60-147(142)",1849,"ソフラン","A","地力"],
+[19,"君のハートにロックオン(L)",260,1828,"局所難","A","地力"],
+[28,"閠槞彁の願い",180,1613,"HCN","A","地力"],
+[26,"金野火織の金色提言",225,1630,"高速、軸、皿絡み、ラス殺し","A","地力"],
+[28,"世界の果てに約束の凱歌を -ReUnion-",200,1983,"CN、軸、ラス殺し","A","地力"],
+[19,"天空の夜明け",150,2072,"高密度乱打、縦連","A","地力"],
+[28,"伐折羅-vajra-",173,1877,"終盤難","A","地力"],
+[27,"ピアノ協奏曲第1番\"蠍火\" (BlackY Remix)",160,1926,"CN、ラス殺し","A","地力"],
+[28,"二人ノ廃城幽踊宴","280-316(290)",1927,"ソフラン、階段、トリル","A","地力"],
+[29,"烽火連天の刃",190,1771,"CN","A","地力"],
+[12,"冥","66-200(200)",2000,"階段、ソフラン、中盤加速発狂","A","地力"],
+[17,"AIR RAID FROM THA UNDAGROUND(L)",180,1523,"トリル","A","個人差"],
+[31,"Cult Invitation",164,1804,"連皿、トリル","A","個人差"],
+[29,"Don't believe the hype",210,1666,"HCN、連皿","A","個人差"],
+[26,"Level One",173,1857,"連皿、皿複合、CN、乱打","A","個人差"],
+[21,"Miracle 5ympho X(L)",210,1551,"BSS、MSS、高速連皿","A","個人差"],
+[29,"Purple Perplex",150,1578,"CN、BSS、MSS、連皿","A","個人差"],
+[12,"Scripted Connection⇒ A mix(L)",151,1749,"対称、微縦連、ラス殺し","A","個人差"],
+[15,"STEEL NEEDLE(L)",205,1701,"前半難、トリル、軸押し","A","個人差"],
+[30,"TECHNOPHOBIA",152,1544,"中盤難","A","個人差"],
+[29,"2 Beasts Unchained",175,1780,"連皿","A","個人差"],
+[16,"3y3s",191,1871,"序盤発狂、皿複合、二重カプセル配置、前半難","A","個人差"],
+[20,"音楽","210-360(245)",1487,"縦連、ソフラン","A","個人差"],
+[20,"カジノファイヤーことみちゃん(L)",230,1777,"CN、BSS、皿絡み","A","個人差"],
+[28,"バッド・スイーツ、バッド・ドリーム",220,1862,"HCN、BSS、皿絡み","A","個人差"],
+[11,"ピアノ協奏曲第１番\"蠍火\"","165-185(185)",1414,"階段、皿、縦連、ラス殺し","A","個人差"],
+[21,"ALBA-黎明-(L)",165,1990,"CN、BSS","B+","地力"],
+[25,"ANCHOR",180,1835,"乱打、CN","B+","地力"],
+[25,"Antigravity",222,1591,"HBSS、高速","B+","地力"],
+[25,"DEADHEAT",200,1721,"皿絡み","B+","地力"],
+[32,"Drop Syndicate",180,1861,"CN、BSS、連皿、デニム","B+","地力"],
+[28,"Empire of Fury",204,1700,"皿絡み、軸","B+","地力"],
+[22,"fallen leaves -IIDX edition-",165,1745,"CN","B+","地力"],
+[23,"Grand Chariot",191,1775,"乱打、皿複合","B+","地力"],
+[29,"GRAVITON",185,1762,"二重トリル、終盤難","B+","地力"],
+[20,"JOMANDA","90-300(195)",1918,"ソフラン、乱打、終盤難","B+","地力"],
+[30,"kors k's How to make OTOGE CORE 「LONG」",190,1863,"CN、BSS、MSS、短CN","B+","地力"],
+[26,"Macho Monky",150,1588,"リズム難、連皿、ラス殺し","B+","地力"],
+[15,"NEW GENERATION -もう、お前しか見えない-(L)",165,1895,"中盤発狂、トリル","B+","地力"],
+[25,"O/D*20(L)",155,1984,"CN、皿絡み、物量","B+","地力"],
+[10,"One More Lovely",200,1452,"螺旋、乱打、ラス殺し","B+","地力"],
+[27,"ORCA",155,1795,"終盤難","B+","地力"],
+[29,"PLASMA SOUL NIGHT feat. Nana Takahashi / 709sec.",178,2271,"物量、皿複合","B+","地力"],
+[31,"Resonant",182,1864,"HCN、HBSS、ズレ","B+","地力"],
+[22,"Shooting Fireball",160,1983,"乱打、縦連","B+","地力"],
+[24,"Snakey Kung-fu",156,1751,"HCN、乱打","B+","地力"],
+[23,"STARLIGHT DANCEHALL(L)",177,1712,"連皿、皿絡み、ラス殺し","B+","地力"],
+[23,"StrayedCatz",303,1490,"階段","B+","地力"],
+[20,"SYNC-ANTHEM","160-166(160)",1865,"乱打、ソフラン、長いラス殺し","B+","地力"],
+[19,"The Limbo",200,1701,"乱打、皿複合","B+","地力"],
+[22,"TOXIC VIBRATION",197,1933,"トリル、階段","B+","地力"],
+[12,"Twelfth Style(L)",160,1684,"乱打、連皿、デニム、対称","B+","地力"],
+[26,"Unbelief",135,1675,"乱打、ズレ、CN","B+","地力"],
+[26,"Visterhv",191,1869,"乱打、終盤難","B+","地力"],
+[31,"Xb10r",200,1833,"CN、MSS","B+","地力"],
+[19,"YAKSHA",190,2000,"繰り返し乱打、軸","B+","地力"],
+[20,"キャトられ恋はモ～モク",196,1988,"乱打、軸、皿複合","B+","地力"],
+[31,"今宵、ロマンス横丁。",168,1714,"CN、BSS、二重階段","B+","地力"],
+[30,"ぞうしょく！？マイデンティティ",200,1851,"CN、繰り返し乱打","B+","地力"],
+[26,"抱きしめてモナムール",190,2110,"乱打、軸、二重階段","B+","地力"],
+[24,"津軽雪",160,1953,"縦連、局所難","B+","地力"],
+[25,"東京神話",196,1505,"局所発狂","B+","地力"],
+[20,"†渚の小悪魔ラヴリィ～レイディオ†(IIDX EDIT)",190,1835,"乱打、同時押し、軸押し、皿複合","B+","地力"],
+[21,"海神(L)",159,1830,"CN、BSS","B+","地力"],
+[11,"Be quiet(L)",150,1463,"連皿","B+","個人差"],
+[25,"Boomy and The Boost",174,1826,"複合、ラス殺し","B+","個人差"],
+[23,"DIAMOND CROSSING",180,1585,"HCN","B+","個人差"],
+[29,"GiGaGaHell",250,1687,"縦連、連皿、トリル","B+","個人差"],
+[20,"Hollywood Galaxy",186,1392,"CN、階段、二重階段","B+","個人差"],
+[27,"Inferno of Fomalhaut",150,1701,"CN、高速二重トリル、連皿","B+","個人差"],
+[16,"Marie Antoinette(L)","205-248(215)",1618,"ソフラン、同時、階段、皿複合","B+","個人差"],
+[30,"Peaktime Booster",180,1663,"連皿","B+","個人差"],
+[19,"Snake Stick",145,1447,"連皿、皿複合","B+","個人差"],
+[20,"STULTI","90-182(182)",1416,"ソフラン、トリル特化","B+","個人差"],
+[23,"199024club -Re:BounceKiller-",143,1260,"連皿、終盤難","B+","個人差"],
+[31,"灼熱Beach Side Bunny (かめりあ's \"Summertime D'n'B\" Remix)",174,1647,"連皿、連打","B+","個人差"],
+[28,"水鏡の異界",168,1661,"CN、連皿","B+","個人差"],
+[19,"A MINSTREL～ver.short-scape～(L)",114,1954,"CN、同時押し","B","地力"],
+[25,"AA -rebuild-",174,1820,"乱打、局所発狂、デニム","B","地力"],
+[29,"Angel's Ladder",155,1800,"乱打、縦連","B","地力"],
+[29,"Arkadia",180,1873,"皿複合、トリル","B","地力"],
+[28,"ASIAN VIRTUAL REALITIES (MELTING TOGETHER IN DAZZLING DARKNESS)",150,1752,"CN","B","地力"],
+[30,"BIGWAVERS",177,1796,"CN、BSS、トリル","B","地力"],
+[16,"BITTER CHOCOLATE STRIKER",165,1990,"同時押し、トリル、中盤発狂、ラス殺し","B","地力"],
+[21,"BLUE DRAGON(雷龍RemixIIDX)",188,1727,"同時押し、多重トリル、皿複合","B","地力"],
+[22,"Broken Sword",160,1887,"乱打、階段、二重階段、終盤難","B","地力"],
+[28,"Burning Flame(L)",165,1938,"連皿、トリル","B","地力"],
+[14,"Candy Galy",184,1798,"同時押し、階段、ラス殺し","B","地力"],
+[22,"cinder",216,1601,"CN、BSS","B","地力"],
+[21,"Close the World feat.a☆ru",188,1739,"階段、二重階段","B","地力"],
+[23,"CODE:1 ［revision1.0.1］",145,1590,"繰り返し乱打","B","地力"],
+[16,"Colorful Cookie",180,1773,"繰り返し乱打、軸、同時押し、皿、中盤発狂","B","地力"],
+[18,"Dances with Snow Fairies",154,1623,"乱打、縦連、軸、ラス殺し","B","地力"],
+[32,"destination",175,1698,"CN、トリル","B","地力"],
+[20,"Devilz Staircase",185,1685,"壁、同時押し、終盤高密度乱打","B","地力"],
+[25,"DropZ-Line-","50-400(200)",1648,"乱打、軸、ソフラン","B","地力"],
+[28,"DUAL STRIKER",185,1960,"CN","B","地力"],
+[22,"entelecheia",185,1657,"CN、軸、終盤難","B","地力"],
+[29,"Flying Castle",174,1877,"MSS、CN","B","地力"],
+[26,"GENE",163,2183,"乱打、皿複合","B","地力"],
+[22,"GUILTY(L)",148,1525,"CN、高密度","B","地力"],
+[26,"HARD BRAIN",155,1914,"CN","B","地力"],
+[30,"I",225,1901,"CN、BSS","B","地力"],
+[25,"Illusionary Waterlily",180,1803,"乱打、皿絡み、CN","B","地力"],
+[21,"INSOMNIA",195,1661,"皿、螺旋階段、二重階段、全押し","B","地力"],
+[26,"KILL EACH OTHER",162,1945,"乱打、終盤難","B","地力"],
+[27,"LASER CRUSTER (IGNITE REMIX)",174,1824,"CN、BSS、連皿","B","地力"],
+[32,"Lightspeed",200,1606,"CN、BSS","B","地力"],
+[12,"Little Little Princess(L)","180-212(212)",1946,"同時押し、局所難","B","地力"],
+[23,"M4K3 1T B0UNC3",150,1546,"CN・BSS","B","地力"],
+[7,"MAX 300","12-300(300)",1429,"デニム","B","地力"],
+[30,"MAX 360","15-360(360)",1610,"CN、同時押し","B","地力"],
+[31,"MAXIMUM CHEAT GIRL",210,1842,"乱打、階段","B","地力"],
+[22,"Monopole.",201,1729,"CN、BSS、縦連、二重トリル","B","地力"],
+[20,"neu",199,1999,"同時押し、階段、終盤難","B","地力"],
+[25,"NITROUS CANNON",169,1875,"乱打、皿絡み、縦連打、連皿","B","地力"],
+[29,"One for All",195,1632,"BSS、連皿","B","地力"],
+[24,"OTENAMI Hurricane",215,1643,"皿複合","B","地力"],
+[20,"Proof of the existence",170,1675,"ズレ、トリル、ラス殺し","B","地力"],
+[19,"QUANTUM TELEPORTATION(L)",152,1845,"乱打","B","地力"],
+[19,"quaver♪","182-186(182)",1745,"トリル、乱打、微ソフラン、ラス殺し","B","地力"],
+[21,"ra'am","111-222(111)",1461,"CN、ソフラン、高速皿複合","B","地力"],
+[23,"refrain",158,1857,"二重階段、ラス殺し","B","地力"],
+[18,"reunion",184,1677,"XX譜面、縦連、局所発狂、トリル、階段、全押し","B","地力"],
+[26,"ruin of opals","220-390(355)",1646,"ソフラン、乱打、縦連打、CN、ズレ、ラスト減速","B","地力"],
+[18,"Session 9 -Chronicles-","182-189(182)",1852,"縦連、階段、二重階段、ソフラン","B","地力"],
+[24,"Sky High",153,1943,"乱打、デニム","B","地力"],
+[25,"Slipstream",175,1822,"乱打、皿絡み","B","地力"],
+[29,"Smalt #28598F",151,1725,"局所難、二重階段","B","地力"],
+[28,"SOLID STATE SQUAD -RISEN RELIC REMIX-",186,1670,"CN","B","地力"],
+[22,"Sounds Of Summer",175,1513,"トリル","B","地力"],
+[11,"spiral galaxy(L)",154,1910,"高密度、乱打、トリル、物量、ラス殺し","B","地力"],
+[30,"Super Freak",200,1754,"乱打","B","地力"],
+[31,"Sword of Vengeance",208,1650,"CN、乱打","B","地力"],
+[27,"TECHNO Style Essentials",154,1453,"CN","B","地力"],
+[16,"THANK YOU FOR PLAYING(L)","45-170(170)",1534,"中盤発狂、乱打","B","地力"],
+[26,"THE DAY OF JUBILATIONS",181,1757,"乱打、CN","B","地力"],
+[16,"thunder HOUSE NATION Remix(L)",128,1954,"高密度、同時","B","地力"],
+[27,"Vinculum stellarum",160,1873,"CN、局所発狂","B","地力"],
+[28,"Viridian",161,1700,"乱打","B","地力"],
+[22,"We're so Happy (P*Light Remix) IIDX ver.",185,1896,"乱打、皿複合","B","地力"],
+[19,"WONDER WALKER",165,1921,"乱打","B","地力"],
+[19,"yellow head joe(L)",187,1596,"CN、皿同時","B","地力"],
+[27,"Ypsilon(L)",160,1801,"乱打","B","地力"],
+[24,"イザナミノナゲキ",195,1661,"CN、同時押し、階段、ズレ","B","地力"],
+[30,"Ou Legends",191,1687,"CN、BSS","B","地力"],
+[19,"子供の落書き帳",280,1395,"軸、序盤発狂、トリル","B","地力"],
+[21,"疾風迅雷",180,1493,"乱打、軸、縦連打、終盤難","B","地力"],
+[20,"シュレーディンガーの猫",187,1717,"乱打、階段、皿複合","B","地力"],
+[27,"深淵に捧ぐレクイエム",175,1537,"CN","B","地力"],
+[21,"旋律のドグマ～Miserables～",192,2002,"乱打","B","地力"],
+[22,"それは花火のような恋",182,1976,"皿複合","B","地力"],
+[31,"電光",165,1560,"CN、BSS、連皿","B","地力"],
+[20,"トリカゴノ鳳凰",185,1932,"CN、微縦連、皿複合","B","地力"],
+[22,"夏色DIARY - L.E.D.-G STYLE MIX -",190,1590,"CN","B","地力"],
+[15,"華爛漫 -Flowers-(L)",160,1597,"高密度、同時押し","B","地力"],
+[29,"禊",160,1631,"CN","B","地力"],
+[23,"めいさいアイドル☆あいむちゃん♪",160,1717,"階段、皿複合","B","地力"],
+[26,"龍王の霊廟(Mausoleum Of The Primal Dragon)(L)",144,2023,"CN","B","地力"],
+[23,"AO-1",195,1443,"皿複合","B","個人差"],
+[11,"FAKE TIME",200,1231,"同時押し、高速トリル、ラス殺し","B","個人差"],
+[22,"Flashes",180,1691,"CN・BSS、皿複合","B","個人差"],
+[22,"IMPLANTATION",145,1163,"縦連、階段","B","個人差"],
+[25,"Papilio ulysses",180,1498,"CN、連皿","B","個人差"],
+[15,"PARANOiA ～HADES～","75-300(300)",1395,"ソフラン、トリル","B","個人差"],
+[17,"Red. by Full Metal Jacket",158,1643,"連皿、皿複合","B","個人差"],
+[21,"VOX UP",202,1870,"皿、軸、トリル、二重トリル、前半難","B","個人差"],
+[18,"Watch Out Pt.2",148,1506,"連皿、皿複合","B","個人差"],
+[16,"Y&Co. is dead or alive","145-876(145)",1478,"ソフラン","B","個人差"],
+[20,"アストライアの双皿",173,1632,"CN、連続二重縦連","B","個人差"],
+[29,"逆月",280,1920,"HCN","B","個人差"],
+[29,"雪上断火","105-180(180)",1544,"連皿、ソフラン","B","個人差"],
+[24,"火影",136,1437,"連皿","B","個人差"],
+[31,"摩天楼",172,1309,"HCN、HBSS、終盤難","B","個人差"],
+[15,"ミラージュ・レジデンス(L)",144,1676,"CN、軸","B","個人差"],
+[29,"Aftermath",200,1828,"HCN、軸","C","地力"],
+[27,"AKASHIC BREAK",205,1823,"皿絡み","C","地力"],
+[30,"Always We Trust In You",190,1625,"CN、皿複合","C","地力"],
+[24,"Amazing Mirage(L)",153,1684,"乱打、皿絡み","C","地力"],
+[21,"Ancient Scapes",178,1780,"乱打、軸、ラス殺し","C","地力"],
+[30,"anthracene",168,1744,"CN、皿絡み、連打","C","地力"],
+[16,"Arabian Rave Night(L)",180,1888,"デニム、同時、階段","C","地力"],
+[30,"Chaotoxin",180,1705,"乱打、連皿","C","地力"],
+[22,"Cosmic Cat(L)",160,1651,"CN、同時押し","C","地力"],
+[32,"COSMIC V3LOCITY",200,1716,"CN","C","地力"],
+[21,"DARK LEGACY",196,1828,"皿絡み、乱打","C","地力"],
+[26,"dAuntl3ss",166,1775,"乱打、ラス殺し","C","地力"],
+[20,"DAY DREAM","80-300(80)",1075,"ソフラン、縦連","C","地力"],
+[32,"DIVINE JUDGEMENT",190,1416,"CN、BSS、二重階段","C","地力"],
+[17,"DOMINION",196,1636,"軸、同時押し、中盤発狂","C","地力"],
+[26,"Dr. Chemical & Killing Machine",165,1700,"乱打","C","地力"],
+[22,"EBONY & IVORY",170,1520,"乱打、皿絡み","C","地力"],
+[17,"Evans",185,1440,"皿複合、軸、ラス殺し","C","地力"],
+[32,"EX-MASSIVE FIGHTER",165,1725,"微縦連","C","地力"],
+[22,"FANTASTIC THREE",185,1649,"連皿、二重階段","C","地力"],
+[27,"Friction［!］Function",150,1634,"CN、BSS、皿絡み、二重階段","C","地力"],
+[24,"FUZIN RIZIN",190,1929,"皿絡み、乱打","C","地力"],
+[31,"Ghost Pulse",165,1409,"CN、乱打","C","地力"],
+[23,"Godspeed",165,1631,"HCN、縦連打","C","地力"],
+[17,"GOLDEN CROSS",150,1765,"繰り返し乱打","C","地力"],
+[22,"Gravigazer",160,1533,"BSS","C","地力"],
+[32,"Here We Go Now",170,1690,"CN、BSS、連皿、終盤難","C","地力"],
+[21,"Idola",201,1826,"デニム","C","地力"],
+[28,"innocent revolver",310,1990,"階段、縦連","C","地力"],
+[22,"Invitation from Mr.C",230,1405,"CN、BSS","C","地力"],
+[23,"Konzert V",160,1710,"デニム、局所難","C","地力"],
+[26,"L.F.O",180,1687,"軸、ラス殺し","C","地力"],
+[21,"Last Dance",150,1650,"BSS、高速トリル、乱打","C","地力"],
+[26,"Lethal Weapon","90-180(180)",1646,"乱打、高速階段、ソフラン","C","地力"],
+[29,"LIVE DRIVING!! feat. 花たん",190,1947,"皿複合","C","地力"],
+[26,"LOST TECHNOLOGIE",157,1822,"乱打、ズレ、CN","C","地力"],
+[31,"Million Dollar",180,1762,"CN、階段","C","地力"],
+[22,"NEO GENERATOR SEVEN",182,1690,"軸、皿複合","C","地力"],
+[23,"Nightmare before oversleep",190,1500,"階段、X譜面","C","地力"],
+[19,"NNRT","101-202(101)",1780,"ソフラン、同時押し、乱打","C","地力"],
+[29,"Push on Beats!～音ゲの国のeX-ストリーマー～","164-172(168)",1748,"縦連、デニム","C","地力"],
+[12,"rage against usual",152,1527,"皿複合、中盤発狂、二重階段","C","地力"],
+[24,"RAIN",159,1657,"CN、乱打","C","地力"],
+[27,"Rave Patroller",175,1705,"ラス殺し","C","地力"],
+[32,"Roar of Chronos",175,1991,"CN、BSS","C","地力"],
+[30,"RINNE",198,1788,"乱打","C","地力"],
+[28,"rommmo",208,1762,"二重トリル、前半難","C","地力"],
+[24,"SAY BAY",165,1455,"CN、BSS、連皿、皿複合、二重階段","C","地力"],
+[31,"Seven Times Four",170,1763,"皿絡み","C","地力"],
+[20,"Sol Cosine Job 2","190-200(190)",1625,"乱打、皿複合、ソフラン、BSS","C","地力"],
+[28,"SOLID STATE SQUAD -RISEN RELIC REMIX-",186,1670,"CN","C","地力"],
+[22,"Sounds Of Summer",175,1513,"トリル","C","地力"],
+[11,"spiral galaxy(L)",154,1910,"高密度、乱打、トリル、物量、ラス殺し","C","地力"],
+[30,"Super Freak",200,1754,"乱打","C","地力"],
+[31,"Sword of Vengeance",208,1650,"CN、乱打","C","地力"],
+[27,"TECHNO Style Essentials",154,1453,"CN","C","地力"],
+[16,"THANK YOU FOR PLAYING(L)","45-170(170)",1534,"中盤発狂、乱打","C","地力"],
+[26,"THE DAY OF JUBILATIONS",181,1757,"乱打、CN","C","地力"],
+[16,"thunder HOUSE NATION Remix(L)",128,1954,"高密度、同時","C","地力"],
+[27,"Vinculum stellarum",160,1873,"CN、局所発狂","C","地力"],
+[28,"Viridian",161,1700,"乱打","C","地力"],
+[22,"We're so Happy (P*Light Remix) IIDX ver.",185,1896,"乱打、皿複合","C","地力"],
+[19,"WONDER WALKER",165,1921,"乱打","C","地力"],
+[19,"yellow head joe(L)",187,1596,"CN、皿同時","C","地力"],
+[27,"Ypsilon(L)",160,1801,"乱打","C","地力"],
+[24,"イザナミノナゲキ",195,1661,"CN、同時押し、階段、ズレ","C","地力"],
+[30,"Ou Legends",191,1687,"CN、BSS","C","地力"],
+[19,"子供の落書き帳",280,1395,"軸、序盤発狂、トリル","C","地力"],
+[21,"疾風迅雷",180,1493,"乱打、軸、縦連打、終盤難","C","地力"],
+[20,"シュレーディンガーの猫",187,1717,"乱打、階段、皿複合","C","地力"],
+[27,"深淵に捧ぐレクイエム",175,1537,"CN","C","地力"],
+[21,"旋律のドグマ～Miserables～",192,2002,"乱打","C","地力"],
+[22,"それは花火のような恋",182,1976,"皿複合","C","地力"],
+[31,"電光",165,1560,"CN、BSS、連皿","C","地力"],
+[20,"トリカゴノ鳳凰",185,1932,"CN、微縦連、皿複合","C","地力"],
+[22,"夏色DIARY - L.E.D.-G STYLE MIX -",190,1590,"CN","C","地力"],
+[15,"華爛漫 -Flowers-(L)",160,1597,"高密度、同時押し","C","地力"],
+[29,"禊",160,1631,"CN","C","地力"],
+[23,"めいさいアイドル☆あいむちゃん♪",160,1717,"階段、皿複合","C","地力"],
+[26,"龍王の霊廟(Mausoleum Of The Primal Dragon)(L)",144,2023,"CN","C","地力"],
+[21,"Adularia",180,1449,"CN、ラス殺し(二重階段)","C","個人差"],
+[30,"B.O.D.Y.",157,1734,"MSS","C","個人差"],
+[22,"BLUE MIRAGE",170,1606,"皿複合","C","個人差"],
+[31,"GAME ON",105,1386,"CN、BSS、連皿","C","個人差"],
+[27,"Level 2",150,1488,"BSS、連皿","C","個人差"],
+[21,"MAD ATTACK(L)",140,1396,"BSS、MSS、連皿、皿複合、トリル","C","個人差"],
+[18,"New Castle Legions","120-180(120)",1418,"ソフラン、CN","C","個人差"],
+[26,"ONIGOROSHI",400,1541,"軸、HBSS","C","個人差"],
+[8,"PLEASE DON'T GO",135,1251,"皿、縦連、局所難、ラス殺し","C","個人差"],
+[22,"Rave*it!! Rave*it!!",282,1656,"CN、同時押し特化、多重軸、全押し","C","個人差"],
+[14,"Sense 2007",140,1517,"縦連、皿複合、局所難、ラス殺し","C","個人差"],
+[24,"TOGAKUSHI",152,1343,"HCN","C","個人差"],
+[22,"ZZ",154,1541,"CN、二重階段","C","個人差"],
+[28,"スーパー戦湯ババンバーン",187,1755,"2連皿","C","個人差"],
+[29,"ハイテックトキオ(L)",165,1657,"MSS","C","個人差"],
+[21,"海神",159,1629,"CN、皿複合","C","個人差"],
+[11,"AA",154,1834,"同時押し、乱打、階段、局所発狂、全体難","D","地力"],
+[31,"ACT0",185,1534,"BSS、軸、トリル","D","地力"],
+[18,"ALBIDA",185,1530,"同時押し、乱打、軸、皿複合","D","地力"],
+[22,"Beat Radiance(L)",192,1809,"同時押し","D","地力"],
+[28,"BIGソムタム",187,1688,"CN","D","地力"],
+[31,"BLAZING_LAZER",191,1752,"BSS、階段、トリル","D","地力"],
+[32,"Bring The Fire",160,1734,"CN","D","地力"],
+[18,"Broken",148,1598,"乱打、デニム","D","地力"],
+[26,"Catch Our Fire!",190,1885,"乱打、皿絡み","D","地力"],
+[31,"Dahlia",185,1617,"BSS、二重階段","D","地力"],
+[27,"Double Dribble",210,1683,"皿絡み、高速二重トリル","D","地力"],
+[26,"Drastic Dramatic",166,1765,"乱打","D","地力"],
+[26,"DRUNK MONKY",145,1177,"軸押し","D","地力"],
+[26,"EVANESCENT","127-165(161)",1845,"乱打、CN、ソフラン","D","地力"],
+[21,"Feel The Beat",175,1830,"皿複合","D","地力"],
+[29,"Fegrix",175,1687,"連皿","D","地力"],
+[19,"fffff",138,1624,"二重階段、高速トリル","D","地力"],
+[14,"FIRE FIRE",150,1405,"皿、二重階段、ラス殺し","D","地力"],
+[31,"frequent",176,1900,"乱打","D","地力"],
+[20,"GAIA",180,1676,"乱打、螺旋階段","D","地力"],
+[16,"Go Beyond!!",200,1166,"中盤発狂、終盤易化","D","地力"],
+[23,"Highcharge Divolt",200,1421,"HCN","D","地力"],
+[16,"Kung-fu Empire(L)",177,1999,"高密度、階段","D","地力"],
+[27,"Matt Silver",146,1707,"皿絡み、縦連、繰り返し乱打","D","地力"],
+[27,"Megalara Garuda",180,1543,"CN","D","地力"],
+[30,"Meissa","124-174(174)",1435,"CN、乱打","D","地力"],
+[30,"No Border",150,1895,"乱打、後半難","D","地力"],
+[30,"ONE AND ONLY",174,1639,"連皿、デニム、X譜面","D","地力"],
+[15,"oratio",162,1493,"裏軸押し、終盤難","D","地力"],
+[31,"Out of Control",185,1598,"CN、トリル、微縦連","D","地力"],
+[28,"Parvati",205,1467,"トリル、階段、終盤難","D","地力"],
+[25,"Persephone",155,1539,"連皿、二重階段","D","地力"],
+[23,"POSSESSION","23-185(185)",1521,"CN、ソフラン、同時押し","D","地力"],
+[21,"PUNISHER",180,1812,"乱打、デニム","D","地力"],
+[25,"Rampage",195,1831,"同時押し、BSS、乱打、ラス殺し","D","地力"],
+[24,"Rave Cannon",160,1700,"乱打、CN、BSS","D","地力"],
+[22,"Say YEEEAHH",135,1677,"同時押し","D","地力"],
+[12,"Scripted Connection⇒ A mix",151,1575,"乱打、対称、トリル、縦連","D","地力"],
+[12,"Scripted Connection⇒ H mix(L)",151,1466,"縦連、同時、階段、ラス殺し、乱打、皿絡み","D","地力"],
+[29,"Silver Bullet","152-172(168)",1662,"ソフラン","D","地力"],
+[17,"SOLID STATE SQUAD",155,1819,"皿、トリル、軸、中盤発狂","D","地力"],
+[22,"SpaceLand☆TOYBOX",172,1501,"乱打、階段","D","地力"],
+[31,"Stereo Beasts",160,1881,"乱打","D","地力"],
+[22,"The Least 100sec","200-264(264)",1505,"二重階段、トリル、ソフラン","D","地力"],
+[19,"The Sampling Paradise",150,1545,"乱打、連皿、CN、BSS","D","地力"],
+[19,"Thunderbolt",188,1911,"乱打","D","地力"],
+[22,"TIEFSEE",165,1752,"乱打","D","地力"],
+[26,"Trill auf G",188,1670,"乱打、中盤難","D","地力"],
+[20,"True Blue",164,1898,"乱打、ラス殺し","D","地力"],
+[24,"Umbral(L)",138,1566,"HCN","D","地力"],
+[5,"V",150,1519,"デニム、トリル","D","地力"],
+[23,"紫陽花 -AZISAI-",155,1490,"CN、二重階段、終盤難","D","地力"],
+[29,"天邪鬼",155,1693,"BSS、壁","D","地力"],
+[21,"ATHER(L)","24-192(192)",1640,"ソフラン、疑似停止、同時押し","D","地力"],
+[13,"カゴノトリ～弐式～",140,1325,"同時押し、乱打、終盤難","D","地力"],
+[13,"華蝶風雪(L)",199,2014,"同時押し、軸","D","地力"],
+[30,"神のシナリオ",140,1652,"HCN、HBSS","D","地力"],
+[30,"#CMFLG",155,1748,"CN、BSS、乱打","D","地力"],
+[24,"九尾狐夜行",145,1521,"高速トリル","D","地力"],
+[20,"狂イ咲ケ焔ノ華",206,1860,"階段、乱打、終盤発狂","D","地力"],
+[19,"恋する☆宇宙戦争っ！！",200,1835,"階段","D","地力"],
+[26,"最小三倍完全数",220,1314,"高速、XX譜面","D","地力"],
+[24,"〆",160,1877,"BSS、乱打、連皿、皿複合","D","地力"],
+[19,"聖人の塔","97-194(97)",1567,"階段、トリル、ソフラン","D","地力"],
+[20,"即席！脳直★ミュージックシステム",197,1838,"皿複合、乱打","D","地力"],
+[14,"電人、暁に斃れる。",165,1725,"乱打、縦連、局所難","D","地力"],
+[24,"刃図羅",165,1746,"乱打、皿絡み","D","地力"],
+[22,"表裏一体！？怪盗いいんちょの悩み",165,1815,"二重階段、皿複合","D","地力"],
+[24,"Caterpillar",170,1561,"連皿、縦連","D","個人差"],
+[30,"dica dica",175,1638,"トリル、連皿","D","個人差"],
+[17,"eRAseRmOToRpHAntOM","135-270(135)",1686,"軸、ソフラン、皿、トリル","D","個人差"],
+[14,"Fascination MAXX","100-400(100)",1313,"高速、ソフラン、縦連、同時押し","D","個人差"],
+[28,"Fire Beat","157-300(157)",1392,"ソフラン","D","個人差"],
+[17,"mosaic",188,1509,"同時押し特化","D","個人差"],
+[8,"桜","13-320(300)",1123,"序盤縦連発狂、ソフラン、同時押し","D","個人差"],
+[28,"魔法のかくれんぼ","178-208(178)",1454,"CN、ソフラン","D","個人差"],
+[17,"ワルツ第17番 ト短調\"大犬のワルツ\"","230-320(300)",1684,"ソフラン、縦連、階段","D","個人差"],
+[24,"Apocalypse",165,1814,"CN、階段","E","地力"],
+[25,"Arca",185,1602,"階段、縦連打","E","地力"],
+[26,"Carry Me Away",175,1613,"皿複合、乱打","E","地力"],
+[6,"Colors (radio edit)",150,1258,"トリル、乱打、終盤発狂","E","地力"],
+[13,"Concertino in Blue","103-155(140)",1311,"二重階段、皿複合、ソフラン","E","地力"],
+[25,"encounter",190,1679,"皿絡み、階段、トリル","E","地力"],
+[19,"F",154,1813,"乱打、階段","E","地力"],
+[11,"gigadelic(H)",173,1116,"トリル、ラス殺し","E","地力"],
+[11,"gigadelic",173,1301,"トリル、皿、ラス殺し","E","地力"],
+[30,"glacia",186,1492,"CN","E","地力"],
+[30,"Hat Surprise (Season 2)",180,1729,"連皿、同時押し","E","地力"],
+[21,"invoker",195,1624,"乱打、軸","E","地力"],
+[31,"JUSTICE/GUILTY feat. Nana Takahashi & 709sec.",183,1959,"皿複合、物量","E","地力"],
+[30,"KING(L)",166,1983,"同時押し","E","地力"],
+[14,"LASER CRUSTER",152,1644,"螺旋、階段、皿複合","E","地力"],
+[20,"Liberation",150,1905,"高速トリル、乱打","E","地力"],
+[27,"LIGHTNING STRIKES",174,1639,"CN","E","地力"],
+[20,"Little Star",183,1635,"乱打、階段","E","地力"],
+[9,"moon_child","130-160(146)",1300,"階段、同時押し、ラス殺し","E","地力"],
+[23,"NINJA IS DEAD IIDX ver.","111-222(222)",1520,"ソフラン、同時押し","E","地力"],
+[26,"Please Welcome Mr.C",230,1522,"ハネリズム、皿複合","E","地力"],
+[25,"Raspberry Railgun",142,1606,"皿絡み、二重階段","E","地力"],
+[11,"RED ZONE(L)",165,1566,"乱打","E","地力"],
+[31,"Sirius",165,1637,"CN、BSS","E","地力"],
+[24,"Summerlights(IIDX Edition)",175,1580,"乱打、CN","E","地力"],
+[24,"Sweet Clapper(L)",162,1485,"CN、同時押し、ラス殺し","E","地力"],
+[22,"Symmetry",163,1659,"対称","E","地力"],
+[31,"The Onlyonez",220,1587,"CN、皿絡み","E","地力"],
+[19,"Todestrieb",185,1733,"階段、CN","E","地力"],
+[14,"VANESSA",185,1228,"皿、二重階段","E","地力"],
+[24,"Venom",190,1624,"トリル","E","地力"],
+[20,"ΕΛΠΙΣ",175,1600,"乱打","E","地力"],
+[18,"黒髪乱れし修羅となりて",150,1745,"開幕縦連、トリル、乱打","E","地力"],
+[32,"灼熱 Lost Summer Dayz",168,1453,"連皿、CN","E","地力"],
+[31,"終焔のClaudia","90-185(185)",1406,"軸","E","地力"],
+[15,"少年A","90-192(90)",1449,"ソフラン、階段、皿複合、後半難","E","地力"],
+[22,"千年ノ理",153,1608,"乱打","E","地力"],
+[31,"《PL|RAYER》",180,1420,"CN、トリル","E","地力"],
+[22,"紅牡丹",181,1445,"乱打","E","地力"],
+[13,"DUE TOMORROW","100-400(400)",1073,"トリル、序盤難、終盤難","E","個人差"],
+[14,"GRID KNIGHT(L)",160,1744,"物量、縦連","E","個人差"],
+[15,"ICARUS","126-251(176)",1301,"ソフラン、中盤加速発狂、トリル","E","個人差"],
+[10,"Innocent Walls(H)",155,1281,"縦連、壁","E","個人差"],
+[10,"Innocent Walls",155,1446,"縦連、壁","E","個人差"],
+[9,"one or eight",155,1177,"序盤発狂、皿、縦連打","E","個人差"],
+[12,"SCREAM SQUAD",220,1073,"連皿、皿複合、トリル","E","個人差"],
+[24,"Steel Edge",177,1604,"HCN","E","個人差"],
+[15,"TROOPERS",177,1496,"皿複合、同時押し","E","個人差"],
+[10,"雪月花",151,1287,"乱打、縦連、皿複合、ラス殺し","E","個人差"],
+[7,"A","93-191(93)",1260,"ソフラン、同時押し、階段","F","地力"],
+[27,"Primitive Vibes",150,1564,"縦連、CN","F","地力"],
+[15,"Ristaccia",160,1386,"同時押し、階段","F","地力"],
+[14,"snow storm(L)",145,1709,"二重階段、ラス殺し","F","地力"],
+[18,"SPECIAL SUMMER CAMPAIGN!",168,1509,"同時押し、乱打、デニム","F","地力"],
+[31,"残像ニ繋ガレタ追憶ノHIDEAWAY",160,1789,"乱打","F","地力"],
+[32,"スパークリング☆彡ハイパーチューン！！",177,1843,"皿同時押し、X譜面","F","地力"],
+[18,"sakura storm",184,1225,"CN","F","個人差"],
+];
+
+// Deduplicate by name+tier (some songs appear in multiple tiers due to copy bug in original data)
+const seen = new Set();
+const SONGS = [];
+RAW_SONGS.forEach((s, i) => {
+  const key = s[1] + '|' + s[4];
+  if (!seen.has(key)) {
+    seen.add(key);
+    SONGS.push({ id: String(i), ver: s[0], name: s[1], bpm: s[2], notes: s[3], attr: s[4], tier: s[5], tierType: s[6] });
+  }
+});
+
+// ────────────────────────────────────────────────
+// LAMP CONFIG
+// ────────────────────────────────────────────────
+const LAMPS = [
+  { id: 'none',   label: '未プレイ',       short: 'なし', cls: 'lamp-none',   badgeCls: 'lamp-none-bg',   color: '#3a3a5e' },
+  { id: 'failed', label: 'FAILED',         short: 'FAIL', cls: 'lamp-failed', badgeCls: 'lamp-failed-bg', color: '#cc2222' },
+  { id: 'ae',     label: 'アシストイージー', short: 'AE',   cls: 'lamp-ae',    badgeCls: 'lamp-ae-bg',    color: '#9933cc' },
+  { id: 'easy',   label: 'イージー',        short: 'EASY', cls: 'lamp-easy',  badgeCls: 'lamp-easy-bg',  color: '#22aa44' },
+  { id: 'clear',  label: 'クリア',          short: 'CLR',  cls: 'lamp-clear', badgeCls: 'lamp-clear-bg', color: '#1a66cc' },
+  { id: 'hard',   label: 'ハード',          short: 'HARD', cls: 'lamp-hard',  badgeCls: 'lamp-hard-bg',  color: '#cccccc' },
+  { id: 'exh',    label: 'EX-HARD',        short: 'EXH',  cls: 'lamp-exh',   badgeCls: 'lamp-exh-bg',   color: '#ccaa00' },
+  { id: 'fc',     label: 'フルコンボ',      short: 'FC',   cls: 'lamp-fc',    badgeCls: 'lamp-fc-bg',    color: '#ffffff' },
+];
+const LAMP_ORDER = { none: 0, failed: 1, ae: 2, easy: 3, clear: 4, hard: 5, exh: 6, fc: 7 };
+
+// ────────────────────────────────────────────────
+// TIERS
+// ────────────────────────────────────────────────
+const TIER_ORDER = ['未定','S+','S','A+','A','B+','B','C','D','E','F'];
+
+// ────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────
+let lamps = {};
+let memos = {};
+let activeTier = 'ALL';
+let activeLampFilter = 'ALL';
+let sortMode = 'default';
+let searchText = '';
+let currentSongId = null;
+
+function loadData() {
+  try {
+    const l = localStorage.getItem('iidx_lamps');
+    const m = localStorage.getItem('iidx_memos');
+    if (l) lamps = JSON.parse(l);
+    if (m) memos = JSON.parse(m);
+  } catch(e) {}
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('iidx_lamps', JSON.stringify(lamps));
+    localStorage.setItem('iidx_memos', JSON.stringify(memos));
+  } catch(e) {}
+}
+
+function getLamp(id) { return lamps[id] || 'none'; }
+
+// ────────────────────────────────────────────────
+// RENDER HELPERS
+// ────────────────────────────────────────────────
+function lampConfig(id) { return LAMPS.find(l => l.id === id) || LAMPS[0]; }
+
+function makeLampBadge(lampId) {
+  const lc = lampConfig(lampId);
+  if (lampId === 'none') return `<span class="lamp-badge" style="background:#1a1a2e;color:#444">-</span>`;
+  if (lampId === 'fc') return `<span class="lamp-badge lamp-fc-badge">${lc.short}</span>`;
+  return `<span class="lamp-badge ${lc.badgeCls}">${lc.short}</span>`;
+}
+
+// ────────────────────────────────────────────────
+// STATS BAR
+// ────────────────────────────────────────────────
+function renderStats() {
+  const counts = {};
+  LAMPS.forEach(l => counts[l.id] = 0);
+  SONGS.forEach(s => counts[getLamp(s.id)]++);
+
+  const bar = document.getElementById('statsBar');
+  bar.innerHTML = LAMPS.map(l => {
+    if (l.id === 'none') {
+      return `<div class="stat-chip"><span class="stat-dot" style="background:#333"></span>未 ${counts.none}</div>`;
+    }
+    return `<div class="stat-chip"><span class="stat-dot" style="background:${l.color}"></span>${l.short} ${counts[l.id]}</div>`;
+  }).join('');
+}
+
+// ────────────────────────────────────────────────
+// FILTER TABS
+// ────────────────────────────────────────────────
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  const tiers = ['ALL', ...TIER_ORDER];
+  bar.innerHTML = tiers.map(t => {
+    const active = t === activeTier ? 'active' : '';
+    const cnt = t === 'ALL' ? SONGS.length : SONGS.filter(s => s.tier === t).length;
+    return `<button class="filter-btn ${active}" data-tier="${t}">${t === 'ALL' ? '全曲' : t} <span style="opacity:0.5;font-size:10px">${cnt}</span></button>`;
+  }).join('');
+  bar.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeTier = btn.dataset.tier;
+      renderFilterBar();
+      renderList();
+    });
+  });
+}
+
+function renderLampFilter() {
+  const bar = document.getElementById('lampFilter');
+  const allActive = activeLampFilter === 'ALL' ? 'active' : '';
+  let html = `<button class="lf-btn ${allActive}" style="background:#1a1a3a;color:#aaa;border-color:${activeLampFilter==='ALL'?'rgba(255,255,255,0.3)':'transparent'}" data-lf="ALL">すべて</button>`;
+  LAMPS.forEach(l => {
+    const active = activeLampFilter === l.id ? 'active' : '';
+    html += `<button class="lf-btn ${active} ${l.badgeCls}" data-lf="${l.id}">${l.label}</button>`;
+  });
+  bar.innerHTML = html;
+  bar.querySelectorAll('.lf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeLampFilter = btn.dataset.lf;
+      renderLampFilter();
+      renderList();
+    });
+  });
+}
+
+// ────────────────────────────────────────────────
+// SORT
+// ────────────────────────────────────────────────
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sortMode = btn.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
+    renderList();
+  });
+});
+
+// ────────────────────────────────────────────────
+// SONG LIST
+// ────────────────────────────────────────────────
+function getFilteredSongs() {
+  let list = [...SONGS];
+  if (activeTier !== 'ALL') list = list.filter(s => s.tier === activeTier);
+  if (activeLampFilter !== 'ALL') list = list.filter(s => getLamp(s.id) === activeLampFilter);
+  if (searchText) {
+    const q = searchText.toLowerCase();
+    list = list.filter(s => s.name.toLowerCase().includes(q) || s.attr.toLowerCase().includes(q));
+  }
+  return list;
+}
+
+function sortSongs(list) {
+  if (sortMode === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  if (sortMode === 'lamp') return [...list].sort((a, b) => LAMP_ORDER[getLamp(b.id)] - LAMP_ORDER[getLamp(a.id)]);
+  return list; // default = tier order
+}
+
+function renderList() {
+  const container = document.getElementById('songList');
+  const filtered = getFilteredSongs();
+  const sorted = sortSongs(filtered);
+
+  if (sorted.length === 0) {
+    container.innerHTML = `<div class="empty-msg">該当する曲が見つかりません</div>`;
+    return;
+  }
+
+  // Group by tier if default sort and tier=ALL
+  if (sortMode === 'default' && activeTier === 'ALL') {
+    let html = '';
+    TIER_ORDER.forEach(tier => {
+      const tierSongs = sorted.filter(s => s.tier === tier);
+      if (tierSongs.length === 0) return;
+      const tierLabel = tier === '未定' ? '未定（難易度未分類）' : `地力/個人差 ${tier}`;
+      html += `<div class="group-header">${tier}</div>`;
+      html += tierSongs.map(s => songCardHTML(s)).join('');
+    });
+    container.innerHTML = html;
+  } else {
+    container.innerHTML = sorted.map(s => songCardHTML(s)).join('');
+  }
+
+  // Attach click handlers
+  container.querySelectorAll('.song-card').forEach(card => {
+    card.addEventListener('click', () => openModal(card.dataset.id));
+  });
+}
+
+function songCardHTML(s) {
+  const lamp = getLamp(s.id);
+  const lc = lampConfig(lamp);
+  const memo = memos[s.id];
+  return `
+    <div class="song-card" data-id="${s.id}">
+      <div class="lamp-strip" style="background:${lc.color}"></div>
+      <div class="song-info">
+        <div class="song-name">${escHtml(s.name)}</div>
+        <div class="song-meta">
+          <span class="meta-attr">${escHtml(s.attr)}</span>
+          <span class="meta-bpm">♩${s.bpm}</span>
+          <span class="meta-notes">${s.notes}NOTES</span>
+        </div>
+        ${memo ? `<div class="memo-bubble">📝 ${escHtml(memo)}</div>` : ''}
+      </div>
+      ${makeLampBadge(lamp)}
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ────────────────────────────────────────────────
+// MODAL
+// ────────────────────────────────────────────────
+function openModal(songId) {
+  currentSongId = songId;
+  const s = SONGS.find(s => s.id === songId);
+  const lamp = getLamp(songId);
+
+  document.getElementById('modalName').textContent = s.name;
+  document.getElementById('modalSub').textContent = `ver.${s.ver} ／ BPM ${s.bpm} ／ ${s.notes}NOTES ／ ${s.attr}`;
+  document.getElementById('memoInput').value = memos[songId] || '';
+
+  const opts = document.getElementById('lampOptions');
+  opts.innerHTML = LAMPS.map(l => {
+    const sel = lamp === l.id ? 'selected' : '';
+    const dot = `<div class="lamp-opt-dot ${l.cls}-color"></div>`;
+    return `<button class="lamp-opt ${l.badgeCls} ${sel}" data-lamp="${l.id}">${dot}${l.label}</button>`;
+  }).join('');
+
+  opts.querySelectorAll('.lamp-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const prevLamp = getLamp(currentSongId);
+      lamps[currentSongId] = btn.dataset.lamp;
+      addLogEntry(currentSongId, prevLamp, btn.dataset.lamp);
+      saveData();
+      opts.querySelectorAll('.lamp-opt').forEach(b => b.classList.toggle('selected', b.dataset.lamp === btn.dataset.lamp));
+      renderStats();
+      renderList();
+    });
+  });
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+document.getElementById('memoInput').addEventListener('input', (e) => {
+  if (currentSongId) {
+    const v = e.target.value.trim();
+    if (v) memos[currentSongId] = v;
+    else delete memos[currentSongId];
+    saveData();
+  }
+});
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  renderList();
+}
+
+// ────────────────────────────────────────────────
+// LOG (play history)
+// ────────────────────────────────────────────────
+let playLog = [];
+
+function loadLog() {
+  try {
+    const l = localStorage.getItem('iidx_log');
+    if (l) playLog = JSON.parse(l);
+  } catch(e) {}
+}
+
+function saveLog() {
+  try {
+    // keep last 500 entries
+    if (playLog.length > 500) playLog = playLog.slice(-500);
+    localStorage.setItem('iidx_log', JSON.stringify(playLog));
+  } catch(e) {}
+}
+
+function addLogEntry(songId, fromLamp, toLamp) {
+  if (fromLamp === toLamp) return;
+  playLog.push({ songId, from: fromLamp, to: toLamp, ts: Date.now() });
+  saveLog();
+}
+
+// ────────────────────────────────────────────────
+// OTHER OVERLAY NAVIGATION
+// ────────────────────────────────────────────────
+function openOther() {
+  document.getElementById('otherOverlay').classList.add('open');
+  showOtherMenu();
+}
+
+function closeOther() {
+  document.getElementById('otherOverlay').classList.remove('open');
+}
+
+function showOtherMenu() {
+  document.getElementById('otherMenu').style.display = 'flex';
+  document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('open'));
+}
+
+function showSubPage(name) {
+  document.getElementById('otherMenu').style.display = 'none';
+  document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('open'));
+  document.getElementById('page-' + name).classList.add('open');
+  // render content
+  if (name === 'graph')     renderGraph();
+  if (name === 'recommend') renderRecommend();
+  if (name === 'log')       renderLog();
+  if (name === 'skill')     renderSkill();
+  if (name === 'summary')   renderSummary();
+}
+
+document.getElementById('otherBtn').addEventListener('click', openOther);
+document.getElementById('otherClose').addEventListener('click', closeOther);
+
+document.querySelectorAll('.menu-card').forEach(card => {
+  card.addEventListener('click', () => showSubPage(card.dataset.page));
+});
+
+document.querySelectorAll('.sub-back').forEach(btn => {
+  btn.addEventListener('click', () => showOtherMenu());
+});
+
+// ────────────────────────────────────────────────
+// 📊 GRAPH
+// ────────────────────────────────────────────────
+function renderGraph() {
+  const body = document.getElementById('body-graph');
+  const EASY_PLUS = ['easy','clear','hard','exh','fc'];
+  const CLEAR_PLUS = ['clear','hard','exh','fc'];
+
+  let html = `<div class="lamp-legend">`;
+  LAMPS.filter(l => l.id !== 'none').forEach(l => {
+    html += `<div class="lamp-legend-item"><div class="lamp-legend-dot" style="background:${l.color}"></div>${l.label}</div>`;
+  });
+  html += `</div>`;
+
+  // Per-tier stacked bar
+  html += `<div class="chart-section">`;
+  html += `<div class="chart-label">EASY以上クリア率（ティア別）</div>`;
+
+  TIER_ORDER.forEach(tier => {
+    if (tier === '未定') return;
+    const songs = SONGS.filter(s => s.tier === tier);
+    if (songs.length === 0) return;
+    const total = songs.length;
+    const easyPlus = songs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
+    const clearPlus = songs.filter(s => CLEAR_PLUS.includes(getLamp(s.id))).length;
+    const pct = Math.round(easyPlus / total * 100);
+    const clearPct = Math.round(clearPlus / total * 100);
+
+    html += `<div class="chart-row">
+      <div class="chart-tier-name">${tier}</div>
+      <div class="chart-bar-wrap">
+        <div style="position:absolute;inset:0;display:flex;">
+          <div style="width:${clearPct}%;background:#1a66cc;height:100%;transition:width 0.5s"></div>
+          <div style="width:${Math.max(0,pct-clearPct)}%;background:#22aa44;height:100%;transition:width 0.5s"></div>
+        </div>
+      </div>
+      <div class="chart-pct">${pct}%</div>
+      <div class="chart-count">${easyPlus}/${total}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Lamp distribution donut-like summary
+  html += `<div class="chart-section">`;
+  html += `<div class="chart-label">ランプ別 内訳</div>`;
+  const total = SONGS.length;
+  LAMPS.forEach(l => {
+    const cnt = SONGS.filter(s => getLamp(s.id) === l.id).length;
+    if (cnt === 0) return;
+    const pct = Math.round(cnt / total * 100);
+    html += `<div class="chart-row">
+      <div class="chart-tier-name" style="width:44px;font-size:10px;color:${l.color}">${l.short}</div>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-fill" style="width:${pct}%;background:${l.color}"></div>
+      </div>
+      <div class="chart-pct">${pct}%</div>
+      <div class="chart-count">${cnt}曲</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  body.innerHTML = html;
+}
+
+// ────────────────────────────────────────────────
+// 🎯 RECOMMEND
+// ────────────────────────────────────────────────
+function renderRecommend() {
+  const body = document.getElementById('body-recommend');
+  const EASY_PLUS = ['easy','clear','hard','exh','fc'];
+
+  // Find frontier: tiers where easy rate is 30-80% — good candidates
+  // Priority: songs in tiers D/E/F that are still none/failed → easy targets
+  // Also songs just above current comfort zone
+
+  const tierStats = {};
+  TIER_ORDER.forEach(tier => {
+    if (tier === '未定') return;
+    const songs = SONGS.filter(s => s.tier === tier);
+    const cleared = songs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
+    tierStats[tier] = { total: songs.length, cleared, rate: songs.length ? cleared / songs.length : 0 };
+  });
+
+  // 1. "もうすぐクリア" — failed or ae songs in relatively accessible tiers
+  const almostThere = SONGS
+    .filter(s => ['failed','ae'].includes(getLamp(s.id)))
+    .sort((a, b) => TIER_ORDER.indexOf(b.tier) - TIER_ORDER.indexOf(a.tier))
+    .slice(0, 5);
+
+  // 2. 未プレイで簡単そうなもの — none in tiers where >50% cleared
+  const easyTargets = SONGS
+    .filter(s => getLamp(s.id) === 'none')
+    .filter(s => s.tier !== '未定' && tierStats[s.tier] && tierStats[s.tier].rate > 0.4)
+    .sort((a, b) => TIER_ORDER.indexOf(b.tier) - TIER_ORDER.indexOf(a.tier))
+    .slice(0, 5);
+
+  // 3. EASYからCLEARに上げ狙い
+  const easyToClear = SONGS
+    .filter(s => getLamp(s.id) === 'easy')
+    .sort((a, b) => TIER_ORDER.indexOf(b.tier) - TIER_ORDER.indexOf(a.tier))
+    .slice(0, 5);
+
+  function recHtml(songs, reason) {
+    if (songs.length === 0) return '<div style="color:var(--text-dim);font-size:12px;padding:8px 0">該当曲なし</div>';
+    return songs.map(s => {
+      const lc = lampConfig(getLamp(s.id));
+      return `<div class="rec-card" data-id="${s.id}">
+        <div class="lamp-strip" style="background:${lc.color};width:3px;height:32px;border-radius:2px;flex-shrink:0"></div>
+        <div class="rec-card-info">
+          <div class="rec-card-name">${escHtml(s.name)}</div>
+          <div class="rec-card-sub">${s.tier} ／ ${s.attr}</div>
+        </div>
+        <div class="rec-card-reason">${reason}</div>
+      </div>`;
+    }).join('');
+  }
+
+  let html = '';
+  html += `<div class="rec-section"><div class="rec-title">🔥 もう少しでクリア</div>${recHtml(almostThere, 'FAIL/AE済')}</div>`;
+  html += `<div class="rec-section"><div class="rec-title">✨ 未プレイの狙い目</div>${recHtml(easyTargets, '周囲クリア済')}</div>`;
+  html += `<div class="rec-section"><div class="rec-title">⬆️ EASYからCLEARへ</div>${recHtml(easyToClear, 'EASY済')}</div>`;
+
+  body.innerHTML = html;
+
+  // clicking a rec card jumps to main list and opens modal
+  body.querySelectorAll('.rec-card').forEach(card => {
+    card.addEventListener('click', () => {
+      closeOther();
+      setTimeout(() => openModal(card.dataset.id), 100);
+    });
+  });
+}
+
+// ────────────────────────────────────────────────
+// 📋 LOG
+// ────────────────────────────────────────────────
+function renderLog() {
+  const body = document.getElementById('body-log');
+  if (playLog.length === 0) {
+    body.innerHTML = `<div class="log-empty">まだ記録がありません<br><br>ランプを変更すると<br>ここに履歴が残ります</div>`;
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  [...playLog].reverse().forEach(entry => {
+    const d = new Date(entry.ts);
+    const key = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(entry);
+  });
+
+  let html = '';
+  Object.entries(grouped).forEach(([date, entries]) => {
+    html += `<div class="log-day-header">${date} （${entries.length}件）</div>`;
+    entries.forEach(entry => {
+      const song = SONGS.find(s => s.id === entry.songId);
+      if (!song) return;
+      const fromLc = lampConfig(entry.from);
+      const toLc   = lampConfig(entry.to);
+      html += `<div class="log-entry">
+        <span class="lamp-badge ${fromLc.badgeCls}" style="font-size:9px;padding:2px 5px;min-width:28px">${fromLc.short}</span>
+        <span class="log-arrow">→</span>
+        <span class="lamp-badge ${toLc.badgeCls}" style="font-size:9px;padding:2px 5px;min-width:28px">${toLc.short}</span>
+        <span class="log-name">${escHtml(song.name)}</span>
+        <span style="font-size:10px;color:var(--text-dim);flex-shrink:0">${song.tier}</span>
+      </div>`;
+    });
+  });
+
+  body.innerHTML = html;
+}
+
+// ────────────────────────────────────────────────
+// 💪 SKILL TAG ANALYSIS
+// ────────────────────────────────────────────────
+function renderSkill() {
+  const body = document.getElementById('body-skill');
+  const EASY_PLUS = ['easy','clear','hard','exh','fc'];
+
+  // Extract common tags from attr field
+  const TAG_LIST = ['連皿','CN','HCN','BSS','MSS','HBSS','階段','二重階段','乱打','トリル','縦連','物量','ソフラン','皿複合','同時押し','軸'];
+
+  const tagStats = {};
+  TAG_LIST.forEach(tag => {
+    const songs = SONGS.filter(s => s.attr.includes(tag));
+    const cleared = songs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
+    tagStats[tag] = { total: songs.length, cleared, rate: songs.length ? cleared / songs.length : 0 };
+  });
+
+  // Sort by rate ascending (weakest first)
+  const sorted = TAG_LIST
+    .filter(t => tagStats[t].total >= 3)
+    .sort((a, b) => tagStats[a].rate - tagStats[b].rate);
+
+  const weak   = sorted.slice(0, 6);
+  const strong = sorted.slice(-4).reverse();
+
+  function tagCardHtml(tags, color) {
+    return tags.map(tag => {
+      const { total, cleared, rate } = tagStats[tag];
+      const pct = Math.round(rate * 100);
+      return `<div class="skill-tag-card">
+        <div class="skill-tag-name">${tag}</div>
+        <div class="skill-tag-bar-wrap">
+          <div class="skill-tag-bar" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div class="skill-tag-sub">${cleared}/${total}曲 クリア（${pct}%）</div>
+      </div>`;
+    }).join('');
+  }
+
+  let html = '';
+  html += `<div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">属性タグ別のEASY以上クリア率です。低いほど苦手な傾向があります。</div>`;
+  html += `<div style="font-size:13px;font-weight:700;color:#ff4444;margin-bottom:8px">🔴 苦手タグ（クリア率低）</div>`;
+  html += `<div class="skill-tag-grid">${tagCardHtml(weak, '#cc3333')}</div>`;
+  html += `<div style="font-size:13px;font-weight:700;color:#44cc77;margin-bottom:8px;margin-top:8px">🟢 得意タグ（クリア率高）</div>`;
+  html += `<div class="skill-tag-grid">${tagCardHtml(strong, '#22aa44')}</div>`;
+
+  body.innerHTML = html;
+}
+
+// ────────────────────────────────────────────────
+// 🏆 SUMMARY
+// ────────────────────────────────────────────────
+function renderSummary() {
+  const body = document.getElementById('body-summary');
+  const EASY_PLUS = ['easy','clear','hard','exh','fc'];
+  const CLEAR_PLUS = ['clear','hard','exh','fc'];
+
+  const total     = SONGS.length;
+  const played    = SONGS.filter(s => getLamp(s.id) !== 'none').length;
+  const easyPlus  = SONGS.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
+  const clearPlus = SONGS.filter(s => CLEAR_PLUS.includes(getLamp(s.id))).length;
+  const hardPlus  = SONGS.filter(s => ['hard','exh','fc'].includes(getLamp(s.id))).length;
+  const fc        = SONGS.filter(s => getLamp(s.id) === 'fc').length;
+
+  // Recent activity
+  const recentLog = [...playLog].reverse().slice(0, 3);
+  const recentHtml = recentLog.length === 0
+    ? '<div style="color:var(--text-dim);font-size:12px">まだ記録がありません</div>'
+    : recentLog.map(entry => {
+        const song = SONGS.find(s => s.id === entry.songId);
+        if (!song) return '';
+        const toLc = lampConfig(entry.to);
+        const d = new Date(entry.ts);
+        const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span class="lamp-badge ${toLc.badgeCls}" style="font-size:9px;padding:2px 5px">${toLc.short}</span>
+          <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(song.name)}</span>
+          <span style="color:var(--text-dim);font-size:10px;flex-shrink:0">${dateStr}</span>
+        </div>`;
+      }).join('');
+
+  let html = `
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-num" style="color:var(--accent)">${played}</div>
+        <div class="summary-label">プレイ済み / ${total}曲</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:#22aa44">${easyPlus}</div>
+        <div class="summary-label">EASY以上クリア</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:#1a66cc">${clearPlus}</div>
+        <div class="summary-label">クリア以上</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:#cccccc">${hardPlus}</div>
+        <div class="summary-label">ハード以上</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--text-dim);margin-bottom:10px">全体クリア率</div>
+    <div style="background:var(--panel);border-radius:10px;padding:14px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--text-dim)">
+        <span>EASY以上</span><span style="color:#22aa44">${Math.round(easyPlus/total*100)}%</span>
+      </div>
+      <div style="height:10px;background:#0a0a20;border-radius:5px;margin-bottom:10px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(easyPlus/total*100)}%;background:#22aa44;border-radius:5px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--text-dim)">
+        <span>クリア以上</span><span style="color:#1a66cc">${Math.round(clearPlus/total*100)}%</span>
+      </div>
+      <div style="height:10px;background:#0a0a20;border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(clearPlus/total*100)}%;background:#1a66cc;border-radius:5px"></div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--text-dim);margin-bottom:10px">最近の変更</div>
+    <div style="background:var(--panel);border-radius:10px;padding:10px 14px;">
+      ${recentHtml}
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+// ────────────────────────────────────────────────
+// PATCH MODAL to record log
+// ────────────────────────────────────────────────
+const _origOpenModal = openModal;
+// We'll hook into lamp option clicks after modal opens — already done below in openModal patch
+
+// ────────────────────────────────────────────────
+// SEARCH
+// ────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchText = e.target.value.trim();
+  if (searchText) {
+    activeTier = 'ALL';
+    renderFilterBar();
+  }
+  renderList();
+});
+
+// ────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────
+loadData();
+loadLog();
+renderStats();
+renderFilterBar();
+renderLampFilter();
+renderList();
+</script>
+</body>
+</html>
