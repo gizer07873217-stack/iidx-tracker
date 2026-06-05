@@ -779,6 +779,7 @@
     <div class="search-wrap">
       <input type="search" id="searchInput" placeholder="曲名・属性で検索..." autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
+    <button class="other-btn" id="diceBtn" title="ランダム選曲">🎲</button>
     <button class="other-btn" id="otherBtn">その他 ▸</button>
   </div>
   <div class="stats-bar" id="statsBar"></div>
@@ -1893,6 +1894,10 @@ function showSubPage(name) {
 
 document.getElementById('otherBtn').addEventListener('click', openOther);
 document.getElementById('otherClose').addEventListener('click', closeOther);
+document.getElementById('diceBtn').addEventListener('click', () => {
+  openOther();
+  showSubPage('random');
+});
 
 document.querySelectorAll('.menu-card').forEach(card => {
   card.addEventListener('click', () => showSubPage(card.dataset.page));
