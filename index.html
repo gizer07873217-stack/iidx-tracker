@@ -859,6 +859,11 @@
         <div class="menu-card-name">サマリー</div>
         <div class="menu-card-desc">全体の達成状況をまとめて確認</div>
       </div>
+      <div class="menu-card" data-page="random" style="grid-column:span 2">
+        <div class="menu-card-icon">🎲</div>
+        <div class="menu-card-name">ランダム選曲</div>
+        <div class="menu-card-desc">未プレイ・FAILEDの曲からランダムで1曲提案</div>
+      </div>
     </div>
   </div>
 
@@ -905,6 +910,15 @@
       <div class="sub-title">🏆 サマリー</div>
     </div>
     <div class="sub-body" id="body-summary"></div>
+  </div>
+
+  <!-- 🎲 ランダム選曲 -->
+  <div class="sub-page" id="page-random">
+    <div class="sub-header">
+      <button class="sub-back" data-back="random">← 戻る</button>
+      <div class="sub-title">🎲 ランダム選曲</div>
+    </div>
+    <div class="sub-body" id="body-random"></div>
   </div>
 
 </div>
@@ -1874,6 +1888,7 @@ function showSubPage(name) {
   if (name === 'log')       renderLog();
   if (name === 'skill')     renderSkill();
   if (name === 'summary')   renderSummary();
+  if (name === 'random')    renderRandom();
 }
 
 document.getElementById('otherBtn').addEventListener('click', openOther);
@@ -2187,8 +2202,77 @@ function renderSummary() {
 }
 
 // ────────────────────────────────────────────────
-// PATCH MODAL to record log
+// 🎲 RANDOM
 // ────────────────────────────────────────────────
+function renderRandom() {
+  const body = document.getElementById('body-random');
+
+  function pick() {
+    const tier = document.getElementById('randomTierSelect').value;
+    const pool = SONGS.filter(s => {
+      const lamp = getLamp(s.id);
+      const lampOk = ['none','failed'].includes(lamp);
+      const tierOk = tier === 'ALL' || s.tier === tier;
+      return lampOk && tierOk;
+    });
+
+    const result = document.getElementById('randomResult');
+    if (pool.length === 0) {
+      result.innerHTML = `<div style="text-align:center;color:var(--text-dim);padding:30px">該当する曲がありません</div>`;
+      return;
+    }
+    const s = pool[Math.floor(Math.random() * pool.length)];
+    const lc = lampConfig(getLamp(s.id));
+    result.innerHTML = `
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-top:8px">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">${s.tier} / ${s.tierType || '地力'}</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:10px;line-height:1.4">${escHtml(s.name)}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">${s.attr || '情報なし'}</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button onclick="closeOther();setTimeout(()=>openModal('${s.id}'),100)"
+            style="background:#0a1a3a;border:1px solid var(--accent);color:var(--accent);
+                   padding:10px 20px;border-radius:10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer">
+            ランプを記録
+          </button>
+          <button onclick="document.getElementById('randomTierSelect').dispatchEvent(new Event('change'))"
+            style="background:var(--panel);border:1px solid var(--border);color:var(--text-dim);
+                   padding:10px 20px;border-radius:10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer">
+            もう1曲
+          </button>
+        </div>
+      </div>`;
+  }
+
+  const tiers = ['ALL', ...TIER_ORDER.filter(t => t !== '未定')];
+  const tierOptions = tiers.map(t =>
+    `<option value="${t}">${t === 'ALL' ? 'すべてのティア' : t}</option>`
+  ).join('');
+
+  body.innerHTML = `
+    <div style="margin-bottom:16px;font-size:13px;color:var(--text-dim)">
+      未プレイ・FAILEDの曲の中からランダムで1曲選びます。
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">ティアを絞る</div>
+      <select id="randomTierSelect"
+        style="width:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;
+               padding:10px 12px;color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none">
+        ${tierOptions}
+      </select>
+    </div>
+    <button id="randomPickBtn"
+      style="width:100%;background:linear-gradient(135deg,#0a1a3a,#001a40);border:1px solid var(--accent);
+             color:var(--accent);padding:14px;border-radius:12px;font-size:15px;font-weight:700;
+             font-family:'Noto Sans JP',sans-serif;cursor:pointer;letter-spacing:1px">
+      🎲 選曲する
+    </button>
+    <div id="randomResult"></div>`;
+
+  document.getElementById('randomPickBtn').addEventListener('click', pick);
+  document.getElementById('randomTierSelect').addEventListener('change', () => {
+    if (document.getElementById('randomResult').innerHTML) pick();
+  });
+}
 const _origOpenModal = openModal;
 // We'll hook into lamp option clicks after modal opens — already done below in openModal patch
 
