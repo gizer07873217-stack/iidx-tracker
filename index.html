@@ -89,7 +89,7 @@
     border-radius: 8px;
     padding: 7px 12px;
     color: var(--text);
-    font-size: 14px;
+    font-size: 16px;
     font-family: 'Noto Sans JP', sans-serif;
     outline: none;
     transition: border-color 0.2s;
@@ -100,27 +100,25 @@
   /* ─── STATS BAR ─── */
   .stats-bar {
     display: flex;
-    padding: 6px 16px 10px;
-    gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    flex-wrap: wrap;
+    padding: 4px 12px 6px;
+    gap: 4px;
   }
-  .stats-bar::-webkit-scrollbar { display: none; }
 
   .stat-chip {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 3px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 3px 10px;
+    padding: 2px 7px;
     white-space: nowrap;
-    font-size: 12px;
+    font-size: 10px;
     flex-shrink: 0;
   }
   .stat-dot {
-    width: 8px; height: 8px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -128,21 +126,19 @@
   /* ─── FILTER TABS ─── */
   .filter-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding: 0 16px 0;
+    padding: 4px 12px 0;
     border-bottom: 1px solid var(--border);
   }
-  .filter-bar::-webkit-scrollbar { display: none; }
 
   .filter-btn {
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
-    padding: 8px 12px;
+    padding: 6px 8px;
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: 11px;
     font-family: 'Noto Sans JP', sans-serif;
     cursor: pointer;
     white-space: nowrap;
@@ -157,25 +153,32 @@
 
   /* ─── LAMP FILTER ─── */
   .lamp-filter {
-    display: flex;
-    gap: 6px;
-    padding: 8px 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    display: grid;
+    grid-template-columns: 1fr 0.5fr 0.5fr 1fr 1fr;
+    gap: 4px;
+    padding: 6px 12px 3px;
+  }
+  .lamp-filter-row2 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 3px 12px 6px;
     border-bottom: 1px solid var(--border);
   }
-  .lamp-filter::-webkit-scrollbar { display: none; }
 
   .lf-btn {
-    flex-shrink: 0;
-    padding: 4px 10px;
+    padding: 5px 4px;
     border-radius: 6px;
     border: 1px solid transparent;
-    font-size: 11px;
+    font-size: 10px;
     font-family: 'Noto Sans JP', sans-serif;
     cursor: pointer;
     transition: all 0.15s;
     opacity: 0.5;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .lf-btn.active { opacity: 1; border-color: rgba(255,255,255,0.3); }
 
@@ -418,7 +421,124 @@
   .lamp-fc-color    { background: var(--lamp-fc); }
 
   /* fc text special */
-  .lamp-fc-badge { background: linear-gradient(135deg,#fff 0%,#ffd700 30%,#00cfff 70%,#fff 100%); color: #000; }
+  .lamp-fc-badge {
+    background: linear-gradient(135deg,#fff 0%,#ffd700 30%,#00cfff 70%,#fff 100%);
+    color: #000;
+    box-shadow: 0 0 8px rgba(255,215,0,0.6), 0 0 16px rgba(0,207,255,0.3);
+  }
+  .lamp-fc-strip {
+    box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(255,215,0,0.5);
+  }
+
+  /* ─── SWIPE ACTIONS ─── */
+  .song-card-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 3px;
+  }
+  .swipe-action {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #000;
+    border-radius: 0 8px 8px 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .song-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.12s;
+    position: relative;
+    border: 1px solid transparent;
+    background: var(--bg);
+    will-change: transform;
+    touch-action: pan-y;
+  }
+  .song-card:hover { background: var(--panel); border-color: var(--border); }
+
+  /* ─── FOCUS PIN SECTION ─── */
+  .focus-pin-section {
+    padding: 8px 12px 0;
+  }
+  .focus-pin-header {
+    font-size: 11px;
+    color: var(--accent2);
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .focus-pin-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+  }
+  .focus-pin-scroll::-webkit-scrollbar { display: none; }
+  .focus-pin-chip {
+    flex-shrink: 0;
+    background: var(--panel);
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 160px;
+  }
+  .focus-pin-chip-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ─── CUSTOM SELECT ─── */
+  .custom-select-wrap {
+    position: relative;
+  }
+  .custom-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    pointer-events: none;
+    font-size: 12px;
+  }
+  .custom-select {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 32px 10px 12px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .custom-select:focus { border-color: var(--accent); }
 
   .empty-msg {
     text-align: center;
@@ -438,7 +558,7 @@
     border-radius: 8px;
     padding: 8px 12px;
     color: var(--text);
-    font-size: 13px;
+    font-size: 16px;
     font-family: 'Noto Sans JP', sans-serif;
     resize: none;
     height: 60px;
@@ -779,12 +899,12 @@
     <div class="search-wrap">
       <input type="search" id="searchInput" placeholder="曲名・属性で検索..." autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
-    <button class="other-btn" id="diceBtn" title="ランダム選曲">🎲</button>
     <button class="other-btn" id="otherBtn">その他 ▸</button>
   </div>
-  <div class="stats-bar" id="statsBar"></div>
+  <div class="stats-bar" id="statsBar" style="display:none"></div>
   <div class="filter-bar" id="filterBar"></div>
   <div class="lamp-filter" id="lampFilter"></div>
+  <div class="lamp-filter-row2" id="lampFilterRow2"></div>
   <div class="sort-bar">
     <span class="sort-label">並び替え:</span>
     <button class="sort-btn active" data-sort="default">デフォルト</button>
@@ -793,6 +913,7 @@
   </div>
 </header>
 
+<div id="focusPinBar"></div>
 <div id="songList"></div>
 
 <!-- Modal -->
@@ -855,15 +976,35 @@
         <div class="menu-card-name">苦手分析</div>
         <div class="menu-card-desc">属性タグ別のクリア率で得意・苦手を把握</div>
       </div>
-      <div class="menu-card" data-page="summary" style="grid-column:span 2">
+      <div class="menu-card" data-page="summary">
         <div class="menu-card-icon">🏆</div>
         <div class="menu-card-name">サマリー</div>
         <div class="menu-card-desc">全体の達成状況をまとめて確認</div>
       </div>
-      <div class="menu-card" data-page="random" style="grid-column:span 2">
+      <div class="menu-card" data-page="random">
         <div class="menu-card-icon">🎲</div>
         <div class="menu-card-name">ランダム選曲</div>
         <div class="menu-card-desc">未プレイ・FAILEDの曲からランダムで1曲提案</div>
+      </div>
+      <div class="menu-card" data-page="focus">
+        <div class="menu-card-icon">📌</div>
+        <div class="menu-card-name">集中リスト</div>
+        <div class="menu-card-desc">今週やる曲を最大10曲ピン留め</div>
+      </div>
+      <div class="menu-card" data-page="attrfilter">
+        <div class="menu-card-icon">📊</div>
+        <div class="menu-card-name">属性別一覧</div>
+        <div class="menu-card-desc">属性を選んで未クリア曲を絞り込む</div>
+      </div>
+      <div class="menu-card" data-page="dan">
+        <div class="menu-card-icon">🏅</div>
+        <div class="menu-card-name">段位記録</div>
+        <div class="menu-card-desc">取得した段位をバージョン・日付と共に管理</div>
+      </div>
+      <div class="menu-card" data-page="backup">
+        <div class="menu-card-icon">💾</div>
+        <div class="menu-card-name">バックアップ</div>
+        <div class="menu-card-desc">ランプデータの書き出し・復元</div>
       </div>
     </div>
   </div>
@@ -920,6 +1061,42 @@
       <div class="sub-title">🎲 ランダム選曲</div>
     </div>
     <div class="sub-body" id="body-random"></div>
+  </div>
+
+  <!-- 📌 集中リスト -->
+  <div class="sub-page" id="page-focus">
+    <div class="sub-header">
+      <button class="sub-back" data-back="focus">← 戻る</button>
+      <div class="sub-title">📌 集中リスト</div>
+    </div>
+    <div class="sub-body" id="body-focus"></div>
+  </div>
+
+  <!-- 📊 属性別一覧 -->
+  <div class="sub-page" id="page-attrfilter">
+    <div class="sub-header">
+      <button class="sub-back" data-back="attrfilter">← 戻る</button>
+      <div class="sub-title">📊 属性別一覧</div>
+    </div>
+    <div class="sub-body" id="body-attrfilter"></div>
+  </div>
+
+  <!-- 🏅 段位記録 -->
+  <div class="sub-page" id="page-dan">
+    <div class="sub-header">
+      <button class="sub-back" data-back="dan">← 戻る</button>
+      <div class="sub-title">🏅 段位記録</div>
+    </div>
+    <div class="sub-body" id="body-dan"></div>
+  </div>
+
+  <!-- 💾 バックアップ -->
+  <div class="sub-page" id="page-backup">
+    <div class="sub-header">
+      <button class="sub-back" data-back="backup">← 戻る</button>
+      <div class="sub-title">💾 バックアップ</div>
+    </div>
+    <div class="sub-body" id="body-backup"></div>
   </div>
 
 </div>
@@ -1674,19 +1851,41 @@ function renderFilterBar() {
 }
 
 function renderLampFilter() {
-  const bar = document.getElementById('lampFilter');
-  const allActive = activeLampFilter === 'ALL' ? 'active' : '';
-  let html = `<button class="lf-btn ${allActive}" style="background:#1a1a3a;color:#aaa;border-color:${activeLampFilter==='ALL'?'rgba(255,255,255,0.3)':'transparent'}" data-lf="ALL">すべて</button>`;
-  LAMPS.forEach(l => {
-    const active = activeLampFilter === l.id ? 'active' : '';
-    html += `<button class="lf-btn ${active} ${l.badgeCls}" data-lf="${l.id}">${l.label}</button>`;
-  });
-  bar.innerHTML = html;
-  bar.querySelectorAll('.lf-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeLampFilter = btn.dataset.lf;
-      renderLampFilter();
-      renderList();
+  const row1 = document.getElementById('lampFilter');
+  const row2 = document.getElementById('lampFilterRow2');
+
+  // Row1: すべて, 未プレイ(半), FC(半), AE, FAILED  → 5 items: 1fr 0.5fr 0.5fr 1fr 1fr
+  // Row2: EASY, CLR, HARD, EXH → 4 items equal
+
+  function btn(id, label, bgCls) {
+    const active = activeLampFilter === id ? 'active' : '';
+    const borderStyle = active ? 'border-color:rgba(255,255,255,0.3)' : '';
+    return `<button class="lf-btn ${active} ${bgCls}" style="${borderStyle}" data-lf="${id}">${label}</button>`;
+  }
+
+  const noneActive = activeLampFilter === 'ALL' ? 'active' : '';
+  const noneBorder = activeLampFilter === 'ALL' ? 'border-color:rgba(255,255,255,0.3)' : '';
+
+  row1.innerHTML =
+    `<button class="lf-btn ${noneActive}" style="background:#1a1a3a;color:#aaa;${noneBorder}" data-lf="ALL">すべて</button>` +
+    btn('none',   '未', 'lamp-none-bg') +
+    btn('fc',     'FC', 'lamp-fc-bg') +
+    btn('ae',     'AE', 'lamp-ae-bg') +
+    btn('failed', 'FAIL', 'lamp-failed-bg');
+
+  row2.innerHTML =
+    btn('easy',  'EASY', 'lamp-easy-bg') +
+    btn('clear', 'CLR',  'lamp-clear-bg') +
+    btn('hard',  'HARD', 'lamp-hard-bg') +
+    btn('exh',   'EXH',  'lamp-exh-bg');
+
+  [row1, row2].forEach(row => {
+    row.querySelectorAll('.lf-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        activeLampFilter = b.dataset.lf;
+        renderLampFilter();
+        renderList();
+      });
     });
   });
 }
@@ -1724,6 +1923,8 @@ function sortSongs(list) {
 
 function renderList() {
   const container = document.getElementById('songList');
+  // save scroll position
+  const scrollY = container.scrollTop;
   const filtered = getFilteredSongs();
   const sorted = sortSongs(filtered);
 
@@ -1738,7 +1939,6 @@ function renderList() {
     TIER_ORDER.forEach(tier => {
       const tierSongs = sorted.filter(s => s.tier === tier);
       if (tierSongs.length === 0) return;
-      const tierLabel = tier === '未定' ? '未定（難易度未分類）' : `地力/個人差 ${tier}`;
       html += `<div class="group-header">${tier}</div>`;
       html += tierSongs.map(s => songCardHTML(s)).join('');
     });
@@ -1747,9 +1947,54 @@ function renderList() {
     container.innerHTML = sorted.map(s => songCardHTML(s)).join('');
   }
 
-  // Attach click handlers
-  container.querySelectorAll('.song-card').forEach(card => {
-    card.addEventListener('click', () => openModal(card.dataset.id));
+  // Restore scroll position
+  container.scrollTop = scrollY;
+
+  // Attach tap handlers on wrapper
+  container.querySelectorAll('.song-card-wrap').forEach(wrap => {
+    wrap.querySelector('.song-card').addEventListener('click', () => openModal(wrap.dataset.id));
+  });
+
+  // Swipe handlers
+  attachSwipeHandlers(container);
+}
+
+function attachSwipeHandlers(container) {
+  container.querySelectorAll('.song-card-wrap').forEach(wrap => {
+    const card = wrap.querySelector('.song-card');
+    const hint = wrap.querySelector('.swipe-action');
+    let startX = 0, startY = 0, dx = 0;
+    let swiping = false;
+
+    card.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dx = 0; swiping = false;
+    }, { passive: true });
+
+    card.addEventListener('touchmove', e => {
+      dx = e.touches[0].clientX - startX;
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (Math.abs(dx) > dy && Math.abs(dx) > 8) {
+        swiping = true;
+        if (dx < 0) {
+          const move = Math.max(dx, -72);
+          card.style.transform = `translateX(${move}px)`;
+          hint.style.opacity = Math.min(Math.abs(move) / 72, 1);
+        }
+      }
+    }, { passive: true });
+
+    card.addEventListener('touchend', () => {
+      if (swiping && dx < -50) {
+        card.style.transform = '';
+        hint.style.opacity = 0;
+        openModal(wrap.dataset.id);
+        return;
+      }
+      card.style.transform = '';
+      hint.style.opacity = 0;
+    });
   });
 }
 
@@ -1759,19 +2004,28 @@ function songCardHTML(s) {
   const memo = memos[s.id];
   const bpmStr = s.bpm ? `♩${s.bpm}` : '';
   const notesStr = s.notes ? `${s.notes}NOTES` : '';
+  const fcGlow = lamp === 'fc' ? ' lamp-fc-strip' : '';
+  // next lamp for swipe hint
+  const nextLampIdx = Math.min(LAMP_ORDER[lamp] + 1, LAMPS.length - 1);
+  const nextLamp = LAMPS[nextLampIdx];
   return `
-    <div class="song-card" data-id="${s.id}">
-      <div class="lamp-strip" style="background:${lc.color}"></div>
-      <div class="song-info">
-        <div class="song-name">${escHtml(s.name)}</div>
-        <div class="song-meta">
-          ${s.attr ? `<span class="meta-attr">${escHtml(s.attr)}</span>` : ''}
-          ${bpmStr ? `<span class="meta-bpm">${bpmStr}</span>` : ''}
-          ${notesStr ? `<span class="meta-notes">${notesStr}</span>` : ''}
-        </div>
-        ${memo ? `<div class="memo-bubble">📝 ${escHtml(memo)}</div>` : ''}
+    <div class="song-card-wrap" data-id="${s.id}">
+      <div class="swipe-action" id="swipe-hint-${s.id}" style="background:#1a3a5a;color:#00aaff">
+        ✏️
       </div>
-      ${makeLampBadge(lamp)}
+      <div class="song-card" data-id="${s.id}">
+        <div class="lamp-strip${fcGlow}" style="background:${lc.color}"></div>
+        <div class="song-info">
+          <div class="song-name">${escHtml(s.name)}</div>
+          <div class="song-meta">
+            ${s.attr ? `<span class="meta-attr">${escHtml(s.attr)}</span>` : ''}
+            ${bpmStr ? `<span class="meta-bpm">${bpmStr}</span>` : ''}
+            ${notesStr ? `<span class="meta-notes">${notesStr}</span>` : ''}
+          </div>
+          ${memo ? `<div class="memo-bubble">📝 ${escHtml(memo)}</div>` : ''}
+        </div>
+        ${makeLampBadge(lamp)}
+      </div>
     </div>`;
 }
 
@@ -1884,20 +2138,20 @@ function showSubPage(name) {
   document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('open'));
   document.getElementById('page-' + name).classList.add('open');
   // render content
-  if (name === 'graph')     renderGraph();
-  if (name === 'recommend') renderRecommend();
-  if (name === 'log')       renderLog();
-  if (name === 'skill')     renderSkill();
-  if (name === 'summary')   renderSummary();
-  if (name === 'random')    renderRandom();
+  if (name === 'graph')      renderGraph();
+  if (name === 'recommend')  renderRecommend();
+  if (name === 'log')        renderLog();
+  if (name === 'skill')      renderSkill();
+  if (name === 'summary')    renderSummary();
+  if (name === 'random')     renderRandom();
+  if (name === 'focus')      renderFocus();
+  if (name === 'attrfilter') renderAttrFilter();
+  if (name === 'dan')        renderDan();
+  if (name === 'backup')     renderBackup();
 }
 
 document.getElementById('otherBtn').addEventListener('click', openOther);
 document.getElementById('otherClose').addEventListener('click', closeOther);
-document.getElementById('diceBtn').addEventListener('click', () => {
-  openOther();
-  showSubPage('random');
-});
 
 document.querySelectorAll('.menu-card').forEach(card => {
   card.addEventListener('click', () => showSubPage(card.dataset.page));
@@ -2257,13 +2511,12 @@ function renderRandom() {
     <div style="margin-bottom:16px;font-size:13px;color:var(--text-dim)">
       未プレイ・FAILEDの曲の中からランダムで1曲選びます。
     </div>
-    <div style="margin-bottom:12px">
+      <div style="margin-bottom:12px">
       <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">ティアを絞る</div>
-      <select id="randomTierSelect"
-        style="width:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;
-               padding:10px 12px;color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none">
+      <div class="custom-select-wrap">
+      <select id="randomTierSelect" class="custom-select">
         ${tierOptions}
-      </select>
+      </select></div>
     </div>
     <button id="randomPickBtn"
       style="width:100%;background:linear-gradient(135deg,#0a1a3a,#001a40);border:1px solid var(--accent);
@@ -2282,6 +2535,301 @@ const _origOpenModal = openModal;
 // We'll hook into lamp option clicks after modal opens — already done below in openModal patch
 
 // ────────────────────────────────────────────────
+// 📌 FOCUS LIST
+// ────────────────────────────────────────────────
+let focusList = [];
+function loadFocus() {
+  try { const f = localStorage.getItem('iidx_focus'); if (f) focusList = JSON.parse(f); } catch(e) {}
+}
+function saveFocus() {
+  try { localStorage.setItem('iidx_focus', JSON.stringify(focusList)); } catch(e) {}
+  renderFocusPinBar();
+}
+
+// ─── Focus pin bar on main screen ───
+function renderFocusPinBar() {
+  const bar = document.getElementById('focusPinBar');
+  if (!bar) return;
+  const active = focusList.filter(id => SONGS.find(s => s.id === id));
+  if (active.length === 0) { bar.innerHTML = ''; return; }
+  let html = `<div class="focus-pin-section">
+    <div class="focus-pin-header">📌 集中リスト</div>
+    <div class="focus-pin-scroll">`;
+  active.forEach(id => {
+    const s = SONGS.find(s => s.id === id);
+    if (!s) return;
+    const lc = lampConfig(getLamp(id));
+    html += `<div class="focus-pin-chip" data-id="${id}" style="border-color:${lc.color}">
+      <div style="width:6px;height:6px;border-radius:50%;background:${lc.color};flex-shrink:0"></div>
+      <span class="focus-pin-chip-name">${escHtml(s.name)}</span>
+    </div>`;
+  });
+  html += `</div></div>`;
+  bar.innerHTML = html;
+  bar.querySelectorAll('.focus-pin-chip').forEach(chip => {
+    chip.addEventListener('click', () => openModal(chip.dataset.id));
+  });
+}
+function renderFocus() {
+  const body = document.getElementById('body-focus');
+  function rebuild() {
+    let html = `<div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">今週集中して取り組む曲を最大10曲登録できます。</div>`;
+    if (focusList.length > 0) {
+      html += `<div style="margin-bottom:16px">`;
+      focusList.forEach((id) => {
+        const s = SONGS.find(s => s.id === id);
+        if (!s) return;
+        const lc = lampConfig(getLamp(id));
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+          <div style="width:3px;height:32px;background:${lc.color};border-radius:2px;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.name)}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:1px">${s.tier} / ${s.attr || '情報なし'}</div>
+          </div>
+          <button data-remove="${id}" style="background:none;border:none;color:#cc4444;font-size:18px;cursor:pointer;padding:4px 6px;flex-shrink:0">×</button>
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div style="text-align:center;color:var(--text-dim);padding:20px 0;font-size:13px">まだ登録されていません</div>`;
+    }
+    if (focusList.length < 10) {
+      html += `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">曲を追加（曲名で検索）</div>
+      <input id="focusSearch" type="search" placeholder="曲名を入力..."
+        style="width:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;
+               padding:9px 12px;color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:8px">
+      <div id="focusSearchResult"></div>`;
+    }
+    body.innerHTML = html;
+    body.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        focusList = focusList.filter(id => id !== btn.dataset.remove);
+        saveFocus(); rebuild();
+      });
+    });
+    const fsInput = document.getElementById('focusSearch');
+    if (fsInput) {
+      fsInput.addEventListener('input', () => {
+        const q = fsInput.value.trim().toLowerCase();
+        const res = document.getElementById('focusSearchResult');
+        if (!q) { res.innerHTML = ''; return; }
+        const hits = SONGS.filter(s => s.name.toLowerCase().includes(q) && !focusList.includes(s.id)).slice(0, 6);
+        res.innerHTML = hits.map(s =>
+          `<div data-add="${s.id}" style="padding:9px 10px;background:var(--panel);border:1px solid var(--border);
+             border-radius:8px;margin-bottom:5px;cursor:pointer;font-size:13px">
+            ${escHtml(s.name)} <span style="color:var(--text-dim);font-size:11px">${s.tier}</span>
+          </div>`
+        ).join('');
+        res.querySelectorAll('[data-add]').forEach(el => {
+          el.addEventListener('click', () => {
+            if (focusList.length < 10) { focusList.push(el.dataset.add); saveFocus(); rebuild(); }
+          });
+        });
+      });
+    }
+  }
+  rebuild();
+}
+
+// ────────────────────────────────────────────────
+// 📊 ATTR FILTER
+// ────────────────────────────────────────────────
+function renderAttrFilter() {
+  const body = document.getElementById('body-attrfilter');
+  const TAG_LIST = ['連皿','CN','HCN','BSS','MSS','HBSS','階段','二重階段','乱打','トリル','縦連','物量','ソフラン','皿複合','同時押し','軸'];
+  const EASY_PLUS = ['easy','clear','hard','exh','fc'];
+  function rebuild(selectedTag, showCleared) {
+    let html = `<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">属性を選んで曲を絞り込みます。</div>`;
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">`;
+    TAG_LIST.forEach(tag => {
+      const active = tag === selectedTag;
+      html += `<button data-tag="${tag}" style="padding:5px 10px;border-radius:6px;border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};
+        background:${active ? '#0a1a3a' : 'var(--panel)'};color:${active ? 'var(--accent)' : 'var(--text-dim)'};
+        font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer">${tag}</button>`;
+    });
+    html += `</div>`;
+    if (selectedTag) {
+      const songs = SONGS.filter(s => s.attr.includes(selectedTag));
+      const cleared = songs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
+      const showing = showCleared ? songs : songs.filter(s => !EASY_PLUS.includes(getLamp(s.id)));
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--text-dim)">${selectedTag}：${songs.length}曲中 ${cleared}曲クリア済</div>
+        <button id="toggleCleared" style="font-size:11px;padding:4px 8px;background:var(--panel);border:1px solid var(--border);
+          border-radius:6px;color:var(--text-dim);font-family:'Noto Sans JP',sans-serif;cursor:pointer">
+          ${showCleared ? 'クリア済を隠す' : 'クリア済も表示'}
+        </button>
+      </div>`;
+      showing.sort((a,b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)).forEach(s => {
+        const lc = lampConfig(getLamp(s.id));
+        html += `<div data-id="${s.id}" style="display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:8px;
+          margin-bottom:3px;cursor:pointer;background:var(--panel);border:1px solid var(--border)">
+          <div style="width:3px;height:32px;background:${lc.color};border-radius:2px;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.name)}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${s.tier} / ${escHtml(s.attr)}</div>
+          </div>
+          ${makeLampBadge(getLamp(s.id))}
+        </div>`;
+      });
+    }
+    body.innerHTML = html;
+    body.querySelectorAll('[data-tag]').forEach(btn => {
+      btn.addEventListener('click', () => rebuild(btn.dataset.tag, false));
+    });
+    const tc = document.getElementById('toggleCleared');
+    if (tc) tc.addEventListener('click', () => rebuild(selectedTag, !showCleared));
+    body.querySelectorAll('[data-id]').forEach(card => {
+      card.addEventListener('click', () => { closeOther(); setTimeout(() => openModal(card.dataset.id), 100); });
+    });
+  }
+  rebuild(null, false);
+}
+
+// ────────────────────────────────────────────────
+// 🏅 DAN
+// ────────────────────────────────────────────────
+let danList = [];
+function loadDan() {
+  try { const d = localStorage.getItem('iidx_dan'); if (d) danList = JSON.parse(d); } catch(e) {}
+}
+function saveDan() {
+  try { localStorage.setItem('iidx_dan', JSON.stringify(danList)); } catch(e) {}
+}
+const IIDX_VERSIONS = [
+  'beatmania IIDX','2nd style','3rd style','4th style','5th style','6th style','7th style',
+  '8th style','9th style','10th style','IIDX RED','HAPPY SKY','DistorteD','GOLD','DJ TROOPERS',
+  'EMPRESS','SIRIUS','Resort Anthem','Lincle','tricoro','SPADA','PENDUAL','copula','SINOBUZ',
+  'CANNON BALLERS','Rootage','HEROIC VERSE','BISTROVER','CastHour','RESIDENT','EPOLIS',
+  'Pinky Crush','Sparkle Shower'
+];
+const DAN_LIST_OPTIONS = [
+  '初段','二段','三段','四段','五段','六段','七段','八段','九段','十段','中伝','皆伝','その他'
+];
+function renderDan() {
+  const body = document.getElementById('body-dan');
+  function rebuild() {
+    let html = '';
+    if (danList.length > 0) {
+      html += `<div style="margin-bottom:20px">`;
+      [...danList].reverse().forEach((entry, idx) => {
+        const realIdx = danList.length - 1 - idx;
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--panel);
+          border:1px solid var(--border);border-radius:12px;margin-bottom:8px">
+          <div style="font-size:24px;flex-shrink:0">🏅</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:700">${escHtml(entry.dan)}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escHtml(entry.ver)}</div>
+            ${entry.date ? `<div style="font-size:11px;color:var(--accent);margin-top:1px">📅 ${escHtml(entry.date)}</div>` : ''}
+            ${entry.memo ? `<div style="font-size:11px;color:var(--accent2);margin-top:1px">📝 ${escHtml(entry.memo)}</div>` : ''}
+          </div>
+          <button data-del="${realIdx}" style="background:none;border:none;color:#cc4444;font-size:18px;cursor:pointer;padding:4px 6px;flex-shrink:0">×</button>
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div style="text-align:center;color:var(--text-dim);padding:20px 0 24px;font-size:13px">まだ記録がありません</div>`;
+    }
+    html += `<div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--accent)">＋ 新しく登録</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px">バージョン</div>
+      <div class="custom-select-wrap" style="margin-bottom:12px">
+      <select id="danVer" class="custom-select">
+        ${IIDX_VERSIONS.map(v => `<option value="${v}">${v}</option>`).join('')}
+      </select></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px">段位</div>
+      <div class="custom-select-wrap" style="margin-bottom:12px">
+      <select id="danName" class="custom-select">
+        ${DAN_LIST_OPTIONS.map(d => `<option value="${d}">${d}</option>`).join('')}
+      </select></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px">合格日（任意）</div>
+      <input id="danDate" type="date" style="width:100%;background:#0a0a20;border:1px solid var(--border);border-radius:8px;
+        padding:9px 12px;color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px">メモ（任意）</div>
+      <input id="danMemo" type="text" placeholder="例：乱付き、緑数字300..." style="width:100%;background:#0a0a20;border:1px solid var(--border);border-radius:8px;
+        padding:9px 12px;color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:14px">
+      <button id="danAddBtn" style="width:100%;background:linear-gradient(135deg,#0a1a3a,#001a40);border:1px solid var(--accent);
+        color:var(--accent);padding:13px;border-radius:10px;font-size:14px;font-weight:700;
+        font-family:'Noto Sans JP',sans-serif;cursor:pointer">登録する</button>
+    </div>`;
+    body.innerHTML = html;
+    const verSel = document.getElementById('danVer');
+    if (verSel) verSel.value = 'Sparkle Shower';
+    document.getElementById('danAddBtn').addEventListener('click', () => {
+      const ver  = document.getElementById('danVer').value;
+      const dan  = document.getElementById('danName').value;
+      const date = document.getElementById('danDate').value;
+      const memo = document.getElementById('danMemo').value.trim();
+      danList.push({ ver, dan, date, memo });
+      saveDan(); rebuild();
+    });
+    body.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        danList.splice(Number(btn.dataset.del), 1);
+        saveDan(); rebuild();
+      });
+    });
+  }
+  rebuild();
+}
+
+// ────────────────────────────────────────────────
+// 💾 BACKUP
+// ────────────────────────────────────────────────
+function renderBackup() {
+  const body = document.getElementById('body-backup');
+  body.innerHTML = `
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+      ランプデータ・メモ・段位記録をテキストとして書き出せます。<br>
+      機種変更や万が一のデータ消失に備えてメモアプリなどに保存してください。
+    </div>
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">📤 書き出し（エクスポート）</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">下のテキストを全選択してコピーし、メモアプリ等に保存してください。</div>
+      <textarea id="exportText" readonly style="width:100%;height:100px;background:#0a0a20;border:1px solid var(--border);
+        border-radius:8px;padding:8px 10px;color:var(--text);font-size:11px;font-family:monospace;resize:none;outline:none;margin-bottom:10px"></textarea>
+      <button id="exportCopyBtn" style="width:100%;background:linear-gradient(135deg,#0a1a3a,#001a40);border:1px solid var(--accent);
+        color:var(--accent);padding:12px;border-radius:10px;font-size:14px;font-weight:700;
+        font-family:'Noto Sans JP',sans-serif;cursor:pointer">📋 コピーする</button>
+    </div>
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px">
+      <div style="font-size:13px;font-weight:700;color:#cc88ff;margin-bottom:10px">📥 復元（インポート）</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">保存しておいたテキストを貼り付けて復元します。<br><span style="color:#ff6666">※現在のデータは上書きされます</span></div>
+      <textarea id="importText" placeholder="バックアップテキストをここに貼り付け..." style="width:100%;height:100px;background:#0a0a20;border:1px solid var(--border);
+        border-radius:8px;padding:8px 10px;color:var(--text);font-size:11px;font-family:monospace;resize:none;outline:none;margin-bottom:10px"></textarea>
+      <button id="importBtn" style="width:100%;background:#1a0a2a;border:1px solid #cc88ff;
+        color:#cc88ff;padding:12px;border-radius:10px;font-size:14px;font-weight:700;
+        font-family:'Noto Sans JP',sans-serif;cursor:pointer">📥 復元する</button>
+      <div id="importMsg" style="font-size:12px;margin-top:8px;text-align:center"></div>
+    </div>`;
+  const exportData = JSON.stringify({ lamps, memos, danList, ts: Date.now() });
+  document.getElementById('exportText').value = exportData;
+  document.getElementById('exportCopyBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(exportData).then(() => {
+      const btn = document.getElementById('exportCopyBtn');
+      btn.textContent = '✅ コピーしました';
+      setTimeout(() => btn.textContent = '📋 コピーする', 2000);
+    }).catch(() => { document.getElementById('exportText').select(); });
+  });
+  document.getElementById('importBtn').addEventListener('click', () => {
+    const msg = document.getElementById('importMsg');
+    try {
+      const data = JSON.parse(document.getElementById('importText').value.trim());
+      if (!data.lamps) throw new Error();
+      lamps   = data.lamps   || {};
+      memos   = data.memos   || {};
+      danList = data.danList || [];
+      saveData(); saveDan();
+      renderStats(); renderList();
+      msg.style.color = '#44dd77';
+      msg.textContent = '✅ 復元しました！';
+    } catch(e) {
+      msg.style.color = '#ff4444';
+      msg.textContent = '❌ データが正しくありません';
+    }
+  });
+}
+
+// ────────────────────────────────────────────────
 // SEARCH
 // ────────────────────────────────────────────────
 document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -2298,9 +2846,12 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 // ────────────────────────────────────────────────
 loadData();
 loadLog();
+loadFocus();
+loadDan();
 renderStats();
 renderFilterBar();
 renderLampFilter();
+renderFocusPinBar();
 renderList();
 
 // Service Worker登録
