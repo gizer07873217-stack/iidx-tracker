@@ -1496,6 +1496,57 @@ const RAW_SONGS = [
 [31,"残像ニ繋ガレタ追憶ノHIDEAWAY",160,1789,"乱打","F","地力"],
 [32,"スパークリング☆彡ハイパーチューン！！",177,1843,"皿同時押し、X譜面","F","地力"],
 [18,"sakura storm",184,1225,"CN","F","個人差"],
+// ── 新曲 (Pinky Crush / Sparkle Shower) ──
+[33,"King of Tribe",0,0,"","E","地力"],
+[33,"Lisa-RICCIA",0,0,"","E","地力"],
+[33,"Aqvion",0,0,"","D","地力"],
+[33,"SISYPHUS",0,0,"","D","地力"],
+[33,"Astra Blaze",0,0,"","D","地力"],
+[33,"Begin",0,0,"","D","地力"],
+[33,"Disco Killer Music Lover",0,0,"","D","地力"],
+[33,"HyperTwist",0,0,"","D","地力"],
+[33,"RALLY '25",0,0,"","D","地力"],
+[33,"RIZING-GAMERS.",0,0,"","D","地力"],
+[33,"ベンガル vs. アムール Battle",0,0,"","D","地力"],
+[33,"EYE OF THE HEAVEN",0,0,"","C","地力"],
+[33,"FlyAway",0,0,"","C","地力"],
+[33,"MARLIN",0,0,"","C","地力"],
+[32,"Plazma[L]",0,0,"","C","地力"],
+[33,"hora de verdad",0,0,"","C","個人差"],
+[33,"chaplet -IIDX re:build-",0,0,"","C","地力"],
+[33,"From Human Blood",0,0,"","C","地力"],
+[33,"Space Battleship S4TØ",0,0,"","C","地力"],
+[33,"クレッシェンド",0,0,"","C","地力"],
+[33,"ビビッド☆＋＊。キラキライム",0,0,"","C","地力"],
+[33,"u gotta beat",0,0,"","B","地力"],
+[33,"Without Heaven",0,0,"","B","地力"],
+[33,"1116",0,0,"","B","地力"],
+[33,"アラビアン ハイパー ナイト",0,0,"","B","地力"],
+[33,"Regina vespaE",0,0,"","B","個人差"],
+[33,"ラブコメトキドキシリアス",0,0,"","B","個人差"],
+[32,"Flāmingo",0,0,"","B+","地力"],
+[33,"UNDO THE NIGHT",0,0,"","B+","個人差"],
+[33,"2 Be Continued",0,0,"","B+","個人差"],
+[33,"Cross Fire",0,0,"","A","地力"],
+[33,"Uaigh Gealaí",0,0,"","A","地力"],
+[33,"uan",0,0,"","A","地力"],
+[33,"Pinky Happy Crazy",0,0,"","A","個人差"],
+[33,"HEROES",0,0,"","A","個人差"],
+[33,"PERFECT GREAT!!",0,0,"","A","地力"],
+[33,"God Mind",0,0,"","A+","地力"],
+[33,"スキッテイエェエエェ!!!!",0,0,"","A+","地力"],
+[33,"Amor∞Fati",0,0,"","A+","個人差"],
+[33,"Memoria Obscura",0,0,"","A+","地力"],
+[33,"igniЯRuina",0,0,"","A+","地力"],
+[33,"色を喪った街",0,0,"","A+","地力"],
+[33,"\"Ω( ˙ω˙ )Ω\" beyond reason",0,0,"","A+","個人差"],
+[33,"fixer",0,0,"","S","地力"],
+[33,"FiZZA_PØT!ON",0,0,"","S","地力"],
+[33,"Lisa-RICCIA[L]",0,0,"","S","個人差"],
+[33,"Makin' It",0,0,"","S","地力"],
+[33,"SµG@R RU$#",0,0,"","S+","地力"],
+[33,"XHRONOXAPSULΣ",0,0,"","S+","地力"],
+[33,"Skratch Education Lv-1",0,0,"","S+","個人差"],
 ];
 
 // Deduplicate by name+tier (some songs appear in multiple tiers due to copy bug in original data)
@@ -1691,15 +1742,17 @@ function songCardHTML(s) {
   const lamp = getLamp(s.id);
   const lc = lampConfig(lamp);
   const memo = memos[s.id];
+  const bpmStr = s.bpm ? `♩${s.bpm}` : '';
+  const notesStr = s.notes ? `${s.notes}NOTES` : '';
   return `
     <div class="song-card" data-id="${s.id}">
       <div class="lamp-strip" style="background:${lc.color}"></div>
       <div class="song-info">
         <div class="song-name">${escHtml(s.name)}</div>
         <div class="song-meta">
-          <span class="meta-attr">${escHtml(s.attr)}</span>
-          <span class="meta-bpm">♩${s.bpm}</span>
-          <span class="meta-notes">${s.notes}NOTES</span>
+          ${s.attr ? `<span class="meta-attr">${escHtml(s.attr)}</span>` : ''}
+          ${bpmStr ? `<span class="meta-bpm">${bpmStr}</span>` : ''}
+          ${notesStr ? `<span class="meta-notes">${notesStr}</span>` : ''}
         </div>
         ${memo ? `<div class="memo-bubble">📝 ${escHtml(memo)}</div>` : ''}
       </div>
@@ -1847,11 +1900,12 @@ function renderGraph() {
   });
   html += `</div>`;
 
-  // Per-tier stacked bar (each lamp gets its own color segment)
+  // Per-tier stacked bar (S+ at top, F at bottom)
+  const GRAPH_TIER_ORDER = ['S+','S','A+','A','B+','B','C','D','E','F'];
   html += `<div class="chart-section">`;
   html += `<div class="chart-label">EASY以上クリア率（ティア別）</div>`;
 
-  TIER_ORDER.forEach(tier => {
+  GRAPH_TIER_ORDER.forEach(tier => {
     if (tier === '未定') return;
     const songs = SONGS.filter(s => s.tier === tier);
     if (songs.length === 0) return;
