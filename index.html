@@ -125,33 +125,68 @@
 
   /* ─── FILTER TABS ─── */
   .filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0;
-    padding: 4px 12px 0;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    padding: 6px 12px 3px;
+  }
+  .filter-bar-row2 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    padding: 3px 12px 6px;
     border-bottom: 1px solid var(--border);
   }
 
   .filter-btn {
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    padding: 6px 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 4px;
     color: var(--text-dim);
     font-size: 11px;
     font-family: 'Noto Sans JP', sans-serif;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
-    flex-shrink: 0;
+    text-align: center;
+    transition: all 0.15s;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .filter-btn.active {
     color: var(--accent);
-    border-bottom-color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(0,170,255,0.08);
   }
-  .filter-btn:hover { color: var(--text); }
 
-  /* ─── LAMP FILTER ─── */
+  /* ─── SORT BAR ─── */
+  .sort-bar {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr;
+    gap: 4px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+
+  .sort-label { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+  .sort-btn {
+    padding: 7px 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sort-btn.active      { color: var(--accent); border-color: var(--accent); background: rgba(0,170,255,0.08); }
+  .sort-btn.active-desc { color: #ff9944; border-color: #ff9944; background: rgba(255,153,68,0.08); }
   .lamp-filter {
     display: grid;
     grid-template-columns: 1fr 0.5fr 0.5fr 1fr 1fr;
@@ -903,13 +938,14 @@
   </div>
   <div class="stats-bar" id="statsBar" style="display:none"></div>
   <div class="filter-bar" id="filterBar"></div>
+  <div class="filter-bar-row2" id="filterBarRow2"></div>
   <div class="lamp-filter" id="lampFilter"></div>
   <div class="lamp-filter-row2" id="lampFilterRow2"></div>
   <div class="sort-bar">
     <span class="sort-label">並び替え:</span>
     <button class="sort-btn active" data-sort="default">デフォルト</button>
     <button class="sort-btn" data-sort="name">曲名</button>
-    <button class="sort-btn" data-sort="lamp">ランプ</button>
+    <button class="sort-btn" id="lampSortBtn" data-sort="lamp-asc">ランプ↑</button>
   </div>
 </header>
 
@@ -1834,18 +1870,29 @@ function renderStats() {
 // FILTER TABS
 // ────────────────────────────────────────────────
 function renderFilterBar() {
-  const bar = document.getElementById('filterBar');
-  const tiers = ['ALL', ...TIER_ORDER];
-  bar.innerHTML = tiers.map(t => {
+  const row1 = document.getElementById('filterBar');
+  const row2 = document.getElementById('filterBarRow2');
+  // Row1: 全曲, F, E, D, C, B
+  // Row2: B+, A, A+, S, S+, 未定
+  const row1Tiers = ['ALL', 'F', 'E', 'D', 'C', 'B'];
+  const row2Tiers = ['B+', 'A', 'A+', 'S', 'S+', '未定'];
+
+  function tierBtn(t) {
     const active = t === activeTier ? 'active' : '';
-    const cnt = t === 'ALL' ? SONGS.length : SONGS.filter(s => s.tier === t).length;
-    return `<button class="filter-btn ${active}" data-tier="${t}">${t === 'ALL' ? '全曲' : t} <span style="opacity:0.5;font-size:10px">${cnt}</span></button>`;
-  }).join('');
-  bar.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeTier = btn.dataset.tier;
-      renderFilterBar();
-      renderList();
+    const label = t === 'ALL' ? '全曲' : t;
+    return `<button class="filter-btn ${active}" data-tier="${t}">${label}</button>`;
+  }
+
+  row1.innerHTML = row1Tiers.map(tierBtn).join('');
+  row2.innerHTML = row2Tiers.map(tierBtn).join('');
+
+  [row1, row2].forEach(row => {
+    row.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeTier = btn.dataset.tier;
+        renderFilterBar();
+        renderList();
+      });
     });
   });
 }
@@ -1893,10 +1940,45 @@ function renderLampFilter() {
 // ────────────────────────────────────────────────
 // SORT
 // ────────────────────────────────────────────────
+function sortSongs(list) {
+  if (sortMode === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  if (sortMode === 'lamp-asc')  return [...list].sort((a, b) => LAMP_ORDER[getLamp(a.id)] - LAMP_ORDER[getLamp(b.id)]);
+  if (sortMode === 'lamp-desc') return [...list].sort((a, b) => LAMP_ORDER[getLamp(b.id)] - LAMP_ORDER[getLamp(a.id)]);
+  return list; // default = tier order
+}
+
+function updateSortBtnUI() {
+  document.querySelectorAll('.sort-btn').forEach(b => {
+    b.classList.remove('active', 'active-desc');
+  });
+  const lampBtn = document.getElementById('lampSortBtn');
+  if (sortMode === 'default') {
+    document.querySelector('[data-sort="default"]').classList.add('active');
+    lampBtn.textContent = 'ランプ↑';
+  } else if (sortMode === 'name') {
+    document.querySelector('[data-sort="name"]').classList.add('active');
+    lampBtn.textContent = 'ランプ↑';
+  } else if (sortMode === 'lamp-asc') {
+    lampBtn.classList.add('active');
+    lampBtn.textContent = 'ランプ↑';
+  } else if (sortMode === 'lamp-desc') {
+    lampBtn.classList.add('active-desc');
+    lampBtn.textContent = 'ランプ↓';
+  }
+}
+
 document.querySelectorAll('.sort-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    sortMode = btn.dataset.sort;
-    document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
+    const s = btn.dataset.sort;
+    if (s === 'lamp-asc') {
+      // 3-state toggle: none → asc → desc → none
+      if (sortMode === 'lamp-asc')       sortMode = 'lamp-desc';
+      else if (sortMode === 'lamp-desc') sortMode = 'default';
+      else                               sortMode = 'lamp-asc';
+    } else {
+      sortMode = s;
+    }
+    updateSortBtnUI();
     renderList();
   });
 });
@@ -1913,12 +1995,6 @@ function getFilteredSongs() {
     list = list.filter(s => s.name.toLowerCase().includes(q) || s.attr.toLowerCase().includes(q));
   }
   return list;
-}
-
-function sortSongs(list) {
-  if (sortMode === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-  if (sortMode === 'lamp') return [...list].sort((a, b) => LAMP_ORDER[getLamp(b.id)] - LAMP_ORDER[getLamp(a.id)]);
-  return list; // default = tier order
 }
 
 function renderList() {
@@ -2851,6 +2927,7 @@ loadDan();
 renderStats();
 renderFilterBar();
 renderLampFilter();
+updateSortBtnUI();
 renderFocusPinBar();
 renderList();
 
