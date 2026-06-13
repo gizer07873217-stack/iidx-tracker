@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iidx-tracker-v10';
+const CACHE_NAME = 'iidx-tracker-v16';
 const FILES = [
   './index2.html',
   './manifest.json',

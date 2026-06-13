@@ -244,7 +244,81 @@
   }
   .sort-btn.active { color: var(--accent); border-color: var(--accent); }
 
-  /* ─── SONG LIST ─── */
+  /* ─── BOTTOM BAR ─── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    z-index: 100;
+    background: rgba(0,0,16,0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottom-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bottom-search input {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .bottom-search input:focus { border-color: var(--accent); }
+  .bottom-search input::placeholder { color: var(--text-dim); }
+
+  /* bottom filter tabs */
+  .bottom-filter-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .bottom-tab {
+    flex: 1;
+    padding: 7px 4px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .bottom-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* bottom panels (hidden by default) */
+  .bottom-panel {
+    display: none;
+    padding: 6px 12px;
+  }
+  .bottom-panel.open { display: block; }
+
+  /* header simplified */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0,0,16,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0) 0 0;
+  }
+
   #songList {
     padding: 8px 12px 100px;
   }
@@ -864,13 +938,14 @@
   .log-entry {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 0;
+    gap: 6px;
+    padding: 8px 10px;
     border-bottom: 1px solid rgba(26,26,74,0.5);
     font-size: 12px;
   }
-  .log-arrow { color: var(--text-dim); font-size: 10px; }
+  .log-arrow { color: var(--text-dim); font-size: 10px; flex-shrink: 0; }
   .log-name  { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-tier  { font-size: 10px; color: var(--text-dim); flex-shrink: 0; min-width: 24px; text-align: right; }
   .log-empty { color: var(--text-dim); text-align: center; padding: 40px 0; font-size: 13px; }
 
   /* ─── SKILL TAGS ─── */
@@ -936,7 +1011,6 @@
     </div>
     <button class="other-btn" id="otherBtn">その他 ▸</button>
   </div>
-  <div class="stats-bar" id="statsBar" style="display:none"></div>
   <div class="filter-bar" id="filterBar"></div>
   <div class="filter-bar-row2" id="filterBarRow2"></div>
   <div class="lamp-filter" id="lampFilter"></div>
@@ -1042,6 +1116,11 @@
         <div class="menu-card-name">バックアップ</div>
         <div class="menu-card-desc">ランプデータの書き出し・復元</div>
       </div>
+      <div class="menu-card" data-page="danpractice">
+        <div class="menu-card-icon">🎯</div>
+        <div class="menu-card-name">段位対策</div>
+        <div class="menu-card-desc">課題曲に近い傾向の練習曲を提案</div>
+      </div>
     </div>
   </div>
 
@@ -1133,6 +1212,15 @@
       <div class="sub-title">💾 バックアップ</div>
     </div>
     <div class="sub-body" id="body-backup"></div>
+  </div>
+
+  <!-- 🎯 段位対策 -->
+  <div class="sub-page" id="page-danpractice">
+    <div class="sub-header">
+      <button class="sub-back" data-back="danpractice">← 戻る</button>
+      <div class="sub-title">🎯 段位対策</div>
+    </div>
+    <div class="sub-body" id="body-danpractice"></div>
   </div>
 
 </div>
@@ -2140,7 +2228,6 @@ function openModal(songId) {
       addLogEntry(currentSongId, prevLamp, btn.dataset.lamp);
       saveData();
       opts.querySelectorAll('.lamp-opt').forEach(b => b.classList.toggle('selected', b.dataset.lamp === btn.dataset.lamp));
-      renderStats();
       renderList();
     });
   });
@@ -2214,16 +2301,17 @@ function showSubPage(name) {
   document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('open'));
   document.getElementById('page-' + name).classList.add('open');
   // render content
-  if (name === 'graph')      renderGraph();
-  if (name === 'recommend')  renderRecommend();
-  if (name === 'log')        renderLog();
-  if (name === 'skill')      renderSkill();
-  if (name === 'summary')    renderSummary();
-  if (name === 'random')     renderRandom();
-  if (name === 'focus')      renderFocus();
-  if (name === 'attrfilter') renderAttrFilter();
-  if (name === 'dan')        renderDan();
-  if (name === 'backup')     renderBackup();
+  if (name === 'graph')       renderGraph();
+  if (name === 'recommend')   renderRecommend();
+  if (name === 'log')         renderLog();
+  if (name === 'skill')       renderSkill();
+  if (name === 'summary')     renderSummary();
+  if (name === 'random')      renderRandom();
+  if (name === 'focus')       renderFocus();
+  if (name === 'attrfilter')  renderAttrFilter();
+  if (name === 'dan')         renderDan();
+  if (name === 'backup')      renderBackup();
+  if (name === 'danpractice') renderDanPractice();
 }
 
 document.getElementById('otherBtn').addEventListener('click', openOther);
@@ -2376,6 +2464,8 @@ function renderRecommend() {
 // ────────────────────────────────────────────────
 // 📋 LOG
 // ────────────────────────────────────────────────
+let logOpenDates = new Set(); // 展開中の日付
+
 function renderLog() {
   const body = document.getElementById('body-log');
   if (playLog.length === 0) {
@@ -2392,25 +2482,66 @@ function renderLog() {
     grouped[key].push(entry);
   });
 
+  // 初回は最新日付だけ展開
+  if (logOpenDates.size === 0) {
+    const firstKey = Object.keys(grouped)[0];
+    if (firstKey) logOpenDates.add(firstKey);
+  }
+
   let html = '';
   Object.entries(grouped).forEach(([date, entries]) => {
-    html += `<div class="log-day-header">${date} （${entries.length}件）</div>`;
-    entries.forEach(entry => {
-      const song = SONGS.find(s => s.id === entry.songId);
-      if (!song) return;
-      const fromLc = lampConfig(entry.from);
-      const toLc   = lampConfig(entry.to);
-      html += `<div class="log-entry">
-        <span class="lamp-badge ${fromLc.badgeCls}" style="font-size:9px;padding:2px 5px;min-width:28px">${fromLc.short}</span>
-        <span class="log-arrow">→</span>
-        <span class="lamp-badge ${toLc.badgeCls}" style="font-size:9px;padding:2px 5px;min-width:28px">${toLc.short}</span>
-        <span class="log-name">${escHtml(song.name)}</span>
-        <span style="font-size:10px;color:var(--text-dim);flex-shrink:0">${song.tier}</span>
+    const isOpen = logOpenDates.has(date);
+    const arrow = isOpen ? '▾' : '▸';
+
+    html += `
+      <div class="log-day-toggle" data-date="${date}"
+        style="display:flex;align-items:center;justify-content:space-between;
+               padding:10px 12px;background:var(--panel);border:1px solid var(--border);
+               border-radius:${isOpen ? '10px 10px 0 0' : '10px'};
+               margin-bottom:${isOpen ? '0' : '6px'};cursor:pointer;user-select:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px;font-weight:700;font-family:'Rajdhani',sans-serif;
+                       letter-spacing:1px;color:${isOpen ? 'var(--accent)' : 'var(--text)'}">
+            ${date}
+          </span>
+          <span style="font-size:11px;color:var(--text-dim)">${entries.length}件</span>
+        </div>
+        <span style="color:var(--text-dim);font-size:14px">${arrow}</span>
       </div>`;
-    });
+
+    if (isOpen) {
+      html += `<div class="log-day-body"
+        style="border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;
+               margin-bottom:6px;overflow:hidden">`;
+      entries.forEach((entry, idx) => {
+        const song = SONGS.find(s => s.id === entry.songId);
+        if (!song) return;
+        const fromLc = lampConfig(entry.from);
+        const toLc   = lampConfig(entry.to);
+        const border = idx < entries.length - 1 ? 'border-bottom:1px solid rgba(26,26,74,0.5)' : '';
+        html += `<div class="log-entry" style="${border}">
+          <span class="lamp-badge ${fromLc.badgeCls}" style="font-size:9px;padding:2px 5px;min-width:28px;flex-shrink:0">${fromLc.short}</span>
+          <span class="log-arrow">→</span>
+          <span class="lamp-badge ${toLc.badgeCls}" style="font-size:9px;padding:2px 5px;min-width:28px;flex-shrink:0">${toLc.short}</span>
+          <span class="log-name">${escHtml(song.name)}</span>
+          <span class="log-tier">${song.tier}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
   });
 
   body.innerHTML = html;
+
+  // トグルイベント
+  body.querySelectorAll('.log-day-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const date = toggle.dataset.date;
+      if (logOpenDates.has(date)) logOpenDates.delete(date);
+      else logOpenDates.add(date);
+      renderLog();
+    });
+  });
 }
 
 // ────────────────────────────────────────────────
@@ -2607,9 +2738,6 @@ function renderRandom() {
     if (document.getElementById('randomResult').innerHTML) pick();
   });
 }
-const _origOpenModal = openModal;
-// We'll hook into lamp option clicks after modal opens — already done below in openModal patch
-
 // ────────────────────────────────────────────────
 // 📌 FOCUS LIST
 // ────────────────────────────────────────────────
@@ -2895,7 +3023,7 @@ function renderBackup() {
       memos   = data.memos   || {};
       danList = data.danList || [];
       saveData(); saveDan();
-      renderStats(); renderList();
+      renderList();
       msg.style.color = '#44dd77';
       msg.textContent = '✅ 復元しました！';
     } catch(e) {
@@ -2903,6 +3031,262 @@ function renderBackup() {
       msg.textContent = '❌ データが正しくありません';
     }
   });
+}
+
+// ────────────────────────────────────────────────
+// 🎯 DAN PRACTICE
+// ────────────────────────────────────────────────
+let danPracticeSets = [];
+
+function loadDanPractice() {
+  try {
+    const d = localStorage.getItem('iidx_danpractice2');
+    if (d) danPracticeSets = JSON.parse(d);
+    const old = localStorage.getItem('iidx_danpractice');
+    if (old && danPracticeSets.length === 0) {
+      const o = JSON.parse(old);
+      if (o.danName || o.songs.some(Boolean)) {
+        danPracticeSets.push({ id: Date.now()+'', name: o.danName || '段位セット1', songs: o.songs });
+        saveDanPractice();
+      }
+    }
+  } catch(e) {}
+}
+
+function saveDanPractice() {
+  try { localStorage.setItem('iidx_danpractice2', JSON.stringify(danPracticeSets)); } catch(e) {}
+}
+
+function newDanSet() {
+  return { id: Date.now()+'', name: '', songs: ['','','',''] };
+}
+
+function attrSimilarity(attrA, attrB) {
+  if (!attrA || !attrB) return 0;
+  const tagsA = attrA.split('、').map(t => t.trim());
+  const tagsB = attrB.split('、').map(t => t.trim());
+  return tagsA.filter(t => tagsB.includes(t)).length;
+}
+
+function tierDistance(tierA, tierB) {
+  const a = TIER_ORDER.indexOf(tierA);
+  const b = TIER_ORDER.indexOf(tierB);
+  if (a === -1 || b === -1) return 99;
+  return Math.abs(a - b);
+}
+
+function getSimilarSongs(targetSong, excludeIds, count = 5) {
+  return SONGS
+    .filter(s => s.id !== targetSong.id && !excludeIds.includes(s.id) && s.tier !== '未定')
+    .map(s => {
+      const attrScore = attrSimilarity(targetSong.attr, s.attr);
+      const tierDist  = tierDistance(targetSong.tier, s.tier);
+      const score = attrScore * 3 - tierDist * 2;
+      return { s, score, attrScore };
+    })
+    .filter(x => x.attrScore >= 1)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, count)
+    .map(x => x.s);
+}
+
+function renderDanPractice() {
+  const body = document.getElementById('body-danpractice');
+  loadDanPractice();
+
+  function showList() {
+    let html = `<div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">段位ごとに課題曲セットを登録・管理できます。</div>`;
+    if (danPracticeSets.length === 0) {
+      html += `<div style="text-align:center;color:var(--text-dim);padding:30px 0;font-size:13px">まだ登録がありません</div>`;
+    } else {
+      danPracticeSets.forEach(set => {
+        const songNames = set.songs.filter(Boolean).map(sid => {
+          const s = SONGS.find(s => s.id === sid);
+          return s ? s.name : '?';
+        });
+        html += `<div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="font-size:15px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              🎯 ${set.name ? set.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '名前なし'}
+            </div>
+            <button data-edit="${set.id}" style="flex-shrink:0;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'Noto Sans JP',sans-serif;cursor:pointer">編集</button>
+            <button data-del="${set.id}" style="flex-shrink:0;background:none;border:none;color:#cc4444;font-size:18px;cursor:pointer;padding:2px 6px">×</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            ${songNames.length === 0
+              ? '<div style="font-size:11px;color:var(--text-dim)">課題曲未登録</div>'
+              : songNames.map((n,i) => `<div style="font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i+1}. ${n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('')}
+          </div>
+          <button data-view="${set.id}" style="width:100%;background:linear-gradient(135deg,#0a1a3a,#001a40);border:1px solid var(--accent);color:var(--accent);padding:10px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer">
+            練習曲を見る
+          </button>
+        </div>`;
+      });
+    }
+    html += `<button id="dpNewBtn" style="width:100%;margin-top:4px;background:var(--panel);border:1px solid var(--border);color:var(--text-dim);padding:13px;border-radius:10px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer">＋ 新しいセットを作成</button>`;
+    body.innerHTML = html;
+
+    document.getElementById('dpNewBtn').addEventListener('click', () => {
+      const set = newDanSet(); danPracticeSets.push(set); saveDanPractice(); showEdit(set.id);
+    });
+    body.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => showEdit(btn.dataset.edit)));
+    body.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => showResult(btn.dataset.view)));
+    body.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => {
+      danPracticeSets = danPracticeSets.filter(s => s.id !== btn.dataset.del);
+      saveDanPractice(); showList();
+    }));
+  }
+
+  function showEdit(setId) {
+    const set = danPracticeSets.find(s => s.id === setId);
+    if (!set) { showList(); return; }
+    function buildEdit() {
+      let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button id="dpEditBack" style="background:none;border:none;color:var(--accent);font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;padding:4px 0">← 戻る</button>
+        <div style="font-size:13px;font-weight:700">セットを編集</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px">段位名</div>
+      <input id="dpSetName" type="text" value="${(set.name||'').replace(/"/g,'&quot;')}" placeholder="例：中伝、皆伝SP..."
+        style="width:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">課題曲（最大4曲）</div>`;
+
+      for (let i = 0; i < 4; i++) {
+        const sid = set.songs[i] || '';
+        const song = sid ? SONGS.find(s => s.id === sid) : null;
+        const lc = song ? lampConfig(getLamp(song.id)) : null;
+        const sname = song ? song.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-dim);flex-shrink:0">${i+1}</div>
+          <div style="flex:1;background:var(--panel);border:1px solid ${song ? lc.color : 'var(--border)'};border-radius:8px;padding:9px 12px;font-size:13px;${song?'':'color:var(--text-dim);'}white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${song ? sname : '未選択'}
+            ${song ? `<span style="font-size:10px;color:var(--text-dim);margin-left:6px">${song.tier}</span>` : ''}
+          </div>
+          <button data-slot="${i}" class="dp-select-btn" style="flex-shrink:0;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--accent);font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;white-space:nowrap">${song?'変更':'選択'}</button>
+          ${song ? `<button data-slot="${i}" class="dp-clear-btn" style="flex-shrink:0;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-dim);font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer">✕</button>` : ''}
+        </div>`;
+      }
+      html += `<button id="dpSaveBtn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#0a1a3a,#001a40);border:1px solid var(--accent);color:var(--accent);padding:13px;border-radius:10px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer">保存して一覧に戻る</button>`;
+      body.innerHTML = html;
+      document.getElementById('dpEditBack').addEventListener('click', () => { set.name = document.getElementById('dpSetName')?.value||set.name; saveDanPractice(); showList(); });
+      document.getElementById('dpSetName').addEventListener('input', e => { set.name = e.target.value; saveDanPractice(); });
+      document.getElementById('dpSaveBtn').addEventListener('click', () => { saveDanPractice(); showList(); });
+      body.querySelectorAll('.dp-select-btn').forEach(btn => btn.addEventListener('click', () => showPicker(setId, Number(btn.dataset.slot), buildEdit)));
+      body.querySelectorAll('.dp-clear-btn').forEach(btn => btn.addEventListener('click', () => { set.songs[Number(btn.dataset.slot)]=''; saveDanPractice(); buildEdit(); }));
+    }
+    buildEdit();
+  }
+
+  function showResult(setId) {
+    const set = danPracticeSets.find(s => s.id === setId);
+    if (!set) { showList(); return; }
+    const selectedIds = set.songs.filter(Boolean);
+    const setNameEsc = (set.name||'段位対策').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button id="dpResultBack" style="background:none;border:none;color:var(--accent);font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;padding:4px 0">← 戻る</button>
+      <div style="font-size:14px;font-weight:700">🎯 ${setNameEsc}</div>
+    </div>`;
+    if (selectedIds.length === 0) {
+      html += `<div style="text-align:center;color:var(--text-dim);padding:40px 0">課題曲が登録されていません</div>`;
+    } else {
+      selectedIds.forEach(sid => {
+        const target = SONGS.find(s => s.id === sid);
+        if (!target) return;
+        const similar = getSimilarSongs(target, selectedIds);
+        const lc = lampConfig(getLamp(target.id));
+        const tname = target.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        html += `<div style="margin-bottom:24px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:3px;height:16px;background:${lc.color};border-radius:2px;flex-shrink:0"></div>
+            <div style="font-size:13px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tname}</div>
+            <div style="font-size:10px;color:var(--text-dim);flex-shrink:0">${target.tier}</div>
+          </div>`;
+        if (similar.length === 0) {
+          html += `<div style="font-size:12px;color:var(--text-dim);padding:8px 12px">類似曲が見つかりませんでした</div>`;
+        } else {
+          similar.forEach(s => {
+            const slc = lampConfig(getLamp(s.id));
+            const common = (target.attr||'').split('、').filter(t => (s.attr||'').split('、').includes(t));
+            const sn = s.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += `<div class="rec-card" data-id="${s.id}" style="margin-bottom:5px">
+              <div class="lamp-strip" style="background:${slc.color};width:3px;height:32px;border-radius:2px;flex-shrink:0"></div>
+              <div class="rec-card-info">
+                <div class="rec-card-name">${sn}</div>
+                <div class="rec-card-sub">${s.tier}${common.length>0?`<span style="color:var(--accent2);margin-left:4px">${common.slice(0,3).join('・')}</span>`:''}
+                </div>
+              </div>
+              ${makeLampBadge(getLamp(s.id))}
+            </div>`;
+          });
+        }
+        html += `</div>`;
+      });
+    }
+    body.innerHTML = html;
+    document.getElementById('dpResultBack').addEventListener('click', showList);
+    body.querySelectorAll('.rec-card').forEach(card => card.addEventListener('click', () => { closeOther(); setTimeout(() => openModal(card.dataset.id), 100); }));
+  }
+
+  function showPicker(setId, slot, onBack) {
+    const set = danPracticeSets.find(s => s.id === setId);
+    body.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button id="dpPickerBack" style="background:none;border:none;color:var(--accent);font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;padding:4px 0">← 戻る</button>
+      <div style="font-size:13px;font-weight:700">課題曲 ${slot+1} を選択</div>
+    </div>
+    <input id="dpSearch" type="search" placeholder="曲名で検索..."
+      style="width:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:10px">
+    <div id="dpPickerList"></div>`;
+    document.getElementById('dpPickerBack').addEventListener('click', onBack);
+    function updateList(q) {
+      const filtered = SONGS.filter(s => !q || s.name.toLowerCase().includes(q.toLowerCase())).slice(0, 50);
+      const list = document.getElementById('dpPickerList');
+      if (!list) return;
+      list.innerHTML = filtered.map(s => {
+        const lc = lampConfig(getLamp(s.id));
+        const sn = s.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<div class="rec-card" data-id="${s.id}" style="margin-bottom:4px">
+          <div class="lamp-strip" style="background:${lc.color};width:3px;height:28px;border-radius:2px;flex-shrink:0"></div>
+          <div class="rec-card-info">
+            <div class="rec-card-name" style="font-size:12px">${sn}</div>
+            <div class="rec-card-sub">${s.tier}${s.attr?' / '+s.attr.split('、').slice(0,2).join('・'):''}</div>
+          </div>
+        </div>`;
+      }).join('');
+      list.querySelectorAll('.rec-card').forEach(card => card.addEventListener('click', () => {
+        if (set) { set.songs[slot] = card.dataset.id; saveDanPractice(); }
+        onBack();
+      }));
+    }
+    updateList('');
+    document.getElementById('dpSearch').addEventListener('input', e => updateList(e.target.value));
+  }
+
+  showList();
+}
+// ────────────────────────────────────────────────
+// BOTTOM BAR TABS
+// ────────────────────────────────────────────────
+function initBottomTabs() {
+  document.querySelectorAll('.bottom-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.bottom-panel').forEach(p => p.classList.remove('open'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('open');
+      adjustSongListPadding();
+    });
+  });
+  adjustSongListPadding();
+}
+
+function adjustSongListPadding() {
+  const bar = document.querySelector('.bottom-bar');
+  const list = document.getElementById('songList');
+  const focusBar = document.getElementById('focusPinBar');
+  if (bar && list) {
+    const h = bar.offsetHeight;
+    list.style.paddingBottom = (h + 12) + 'px';
+    if (focusBar) focusBar.style.paddingBottom = '0';
+  }
 }
 
 // ────────────────────────────────────────────────
@@ -2924,7 +3308,7 @@ loadData();
 loadLog();
 loadFocus();
 loadDan();
-renderStats();
+loadDanPractice();
 renderFilterBar();
 renderLampFilter();
 updateSortBtnUI();
