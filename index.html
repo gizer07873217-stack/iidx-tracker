@@ -1053,6 +1053,12 @@
         🔍 難易度表検索
       </a>
     </div>
+    <div style="padding: 0 16px 16px;">
+      <button id="removedToggleBtn"
+        style="width:100%;padding:11px;border-radius:10px;font-size:13px;font-weight:700;
+               font-family:'Noto Sans JP',sans-serif;cursor:pointer;">
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1941,6 +1947,7 @@ const TIER_ORDER = ['F','E','D','C','B','B+','A','A+','S','S+','未定'];
 // ────────────────────────────────────────────────
 let lamps = {};
 let memos = {};
+let removedSongs = {}; // { songId: true } 削除済み（旧曲）フラグ
 let activeTier = 'ALL';
 let activeLampFilter = 'ALL';
 let sortMode = 'default';
@@ -1951,8 +1958,10 @@ function loadData() {
   try {
     const l = localStorage.getItem('iidx_lamps');
     const m = localStorage.getItem('iidx_memos');
+    const r = localStorage.getItem('iidx_removed');
     if (l) lamps = JSON.parse(l);
     if (m) memos = JSON.parse(m);
+    if (r) removedSongs = JSON.parse(r);
   } catch(e) {}
 }
 
@@ -1960,7 +1969,15 @@ function saveData() {
   try {
     localStorage.setItem('iidx_lamps', JSON.stringify(lamps));
     localStorage.setItem('iidx_memos', JSON.stringify(memos));
+    localStorage.setItem('iidx_removed', JSON.stringify(removedSongs));
   } catch(e) {}
+}
+
+function isRemoved(id) { return !!removedSongs[id]; }
+function toggleRemoved(id) {
+  if (removedSongs[id]) delete removedSongs[id];
+  else removedSongs[id] = true;
+  saveData();
 }
 
 function getLamp(id) { return lamps[id] || 'none'; }
@@ -2070,8 +2087,16 @@ function renderLampFilter() {
 // ────────────────────────────────────────────────
 function sortSongs(list) {
   if (sortMode === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-  if (sortMode === 'lamp-asc')  return [...list].sort((a, b) => LAMP_ORDER[getLamp(a.id)] - LAMP_ORDER[getLamp(b.id)]);
-  if (sortMode === 'lamp-desc') return [...list].sort((a, b) => LAMP_ORDER[getLamp(b.id)] - LAMP_ORDER[getLamp(a.id)]);
+  if (sortMode === 'lamp-asc')  return [...list].sort((a, b) => {
+    const ra = isRemoved(a.id), rb = isRemoved(b.id);
+    if (ra !== rb) return ra ? 1 : -1; // 削除済みは常に最下位
+    return LAMP_ORDER[getLamp(a.id)] - LAMP_ORDER[getLamp(b.id)];
+  });
+  if (sortMode === 'lamp-desc') return [...list].sort((a, b) => {
+    const ra = isRemoved(a.id), rb = isRemoved(b.id);
+    if (ra !== rb) return ra ? 1 : -1; // 削除済みは常に最下位
+    return LAMP_ORDER[getLamp(b.id)] - LAMP_ORDER[getLamp(a.id)];
+  });
   return list; // default = tier order
 }
 
@@ -2206,6 +2231,7 @@ function songCardHTML(s) {
   const lamp = getLamp(s.id);
   const lc = lampConfig(lamp);
   const memo = memos[s.id];
+  const removed = isRemoved(s.id);
   const bpmStr = s.bpm ? `♩${s.bpm}` : '';
   const notesStr = s.notes ? `${s.notes}NOTES` : '';
   const fcGlow = lamp === 'fc' ? ' lamp-fc-strip' : '';
@@ -2217,18 +2243,19 @@ function songCardHTML(s) {
       <div class="swipe-action" id="swipe-hint-${s.id}" style="background:#1a3a5a;color:#00aaff">
         ✏️
       </div>
-      <div class="song-card" data-id="${s.id}">
-        <div class="lamp-strip${fcGlow}" style="background:${lc.color}"></div>
+      <div class="song-card" data-id="${s.id}" style="${removed ? 'opacity:0.4' : ''}">
+        <div class="lamp-strip${fcGlow}" style="background:${removed ? '#444' : lc.color}"></div>
         <div class="song-info">
-          <div class="song-name">${escHtml(s.name)}</div>
+          <div class="song-name">${removed ? '🗑️ ' : ''}${escHtml(s.name)}</div>
           <div class="song-meta">
+            ${removed ? `<span class="meta-attr" style="color:#cc6666;border-color:#663333">削除済み曲</span>` : ''}
             ${s.attr ? `<span class="meta-attr">${escHtml(s.attr)}</span>` : ''}
             ${bpmStr ? `<span class="meta-bpm">${bpmStr}</span>` : ''}
             ${notesStr ? `<span class="meta-notes">${notesStr}</span>` : ''}
           </div>
           ${memo ? `<div class="memo-bubble">📝 ${escHtml(memo)}</div>` : ''}
         </div>
-        ${makeLampBadge(lamp)}
+        ${removed ? '' : makeLampBadge(lamp)}
       </div>
     </div>`;
 }
@@ -2272,7 +2299,31 @@ function openModal(songId) {
     });
   });
 
+  // 削除済み曲トグル
+  updateRemovedToggleUI(songId);
+  document.getElementById('removedToggleBtn').onclick = () => {
+    toggleRemoved(songId);
+    updateRemovedToggleUI(songId);
+    renderList();
+  };
+
   document.getElementById('modalOverlay').classList.add('open');
+}
+
+function updateRemovedToggleUI(songId) {
+  const btn = document.getElementById('removedToggleBtn');
+  const removed = isRemoved(songId);
+  if (removed) {
+    btn.textContent = '↩️ 削除済み曲フラグを解除';
+    btn.style.background = '#1a2a1a';
+    btn.style.border = '1px solid #336633';
+    btn.style.color = '#66cc88';
+  } else {
+    btn.textContent = '🗑️ この曲を「削除済み（旧曲）」にする';
+    btn.style.background = '#2a1a1a';
+    btn.style.border = '1px solid #663333';
+    btn.style.color = '#cc6666';
+  }
 }
 
 document.getElementById('modalOverlay').addEventListener('click', (e) => {
@@ -2371,6 +2422,7 @@ document.querySelectorAll('.sub-back').forEach(btn => {
 function renderGraph() {
   const body = document.getElementById('body-graph');
   const LAMP_STACK = ['easy','clear','hard','exh','fc']; // order in bar left to right
+  const activeSongs = SONGS.filter(s => !isRemoved(s.id)); // 削除済み曲を除外
 
   let html = `<div class="lamp-legend">`;
   LAMPS.filter(l => LAMP_STACK.includes(l.id)).forEach(l => {
@@ -2385,7 +2437,7 @@ function renderGraph() {
 
   GRAPH_TIER_ORDER.forEach(tier => {
     if (tier === '未定') return;
-    const songs = SONGS.filter(s => s.tier === tier);
+    const songs = activeSongs.filter(s => s.tier === tier);
     if (songs.length === 0) return;
     const total = songs.length;
     const easyPlus = songs.filter(s => LAMP_STACK.includes(getLamp(s.id))).length;
@@ -2413,9 +2465,9 @@ function renderGraph() {
   // Lamp distribution
   html += `<div class="chart-section">`;
   html += `<div class="chart-label">ランプ別 内訳</div>`;
-  const total = SONGS.length;
+  const total = activeSongs.length;
   LAMPS.forEach(l => {
-    const cnt = SONGS.filter(s => getLamp(s.id) === l.id).length;
+    const cnt = activeSongs.filter(s => getLamp(s.id) === l.id).length;
     if (cnt === 0) return;
     const pct = Math.round(cnt / total * 100);
     html += `<div class="chart-row">
@@ -2428,6 +2480,13 @@ function renderGraph() {
     </div>`;
   });
   html += `</div>`;
+
+  const removedCount = SONGS.length - activeSongs.length;
+  if (removedCount > 0) {
+    html += `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding-top:8px">
+      ※ 削除済み曲（旧曲）${removedCount}曲は集計から除外しています
+    </div>`;
+  }
 
   body.innerHTML = html;
 }
@@ -2596,7 +2655,7 @@ function renderSkill() {
 
   const tagStats = {};
   TAG_LIST.forEach(tag => {
-    const songs = SONGS.filter(s => s.attr.includes(tag));
+    const songs = SONGS.filter(s => !isRemoved(s.id) && s.attr.includes(tag));
     const cleared = songs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
     tagStats[tag] = { total: songs.length, cleared, rate: songs.length ? cleared / songs.length : 0 };
   });
@@ -2640,13 +2699,14 @@ function renderSummary() {
   const body = document.getElementById('body-summary');
   const EASY_PLUS = ['easy','clear','hard','exh','fc'];
   const CLEAR_PLUS = ['clear','hard','exh','fc'];
+  const activeSongs = SONGS.filter(s => !isRemoved(s.id));
 
-  const total     = SONGS.length;
-  const played    = SONGS.filter(s => getLamp(s.id) !== 'none').length;
-  const easyPlus  = SONGS.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
-  const clearPlus = SONGS.filter(s => CLEAR_PLUS.includes(getLamp(s.id))).length;
-  const hardPlus  = SONGS.filter(s => ['hard','exh','fc'].includes(getLamp(s.id))).length;
-  const fc        = SONGS.filter(s => getLamp(s.id) === 'fc').length;
+  const total     = activeSongs.length;
+  const played    = activeSongs.filter(s => getLamp(s.id) !== 'none').length;
+  const easyPlus  = activeSongs.filter(s => EASY_PLUS.includes(getLamp(s.id))).length;
+  const clearPlus = activeSongs.filter(s => CLEAR_PLUS.includes(getLamp(s.id))).length;
+  const hardPlus  = activeSongs.filter(s => ['hard','exh','fc'].includes(getLamp(s.id))).length;
+  const fc        = activeSongs.filter(s => getLamp(s.id) === 'fc').length;
 
   // Recent activity
   const recentLog = [...playLog].reverse().slice(0, 3);
